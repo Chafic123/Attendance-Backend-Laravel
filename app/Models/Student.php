@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Student extends Model
 {
@@ -19,6 +20,16 @@ class Student extends Model
         'video',
     ];
 
+    // for the student_id
+    protected static function booted()
+    {
+
+        static::creating(function ($student) {
+            $currentYear = Carbon::now()->year;
+            $student->student_id = $currentYear . str_pad($student->id, 4, '0', STR_PAD_LEFT);
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -29,24 +40,6 @@ class Student extends Model
         return $this->belongsTo(Department::class);
     }
 
-    // public function courses()
-    // {
-    //     return $this->belongsToMany(Course::class, 'enrollment', 'student_id', 'course_id')
-    //                 ->withTimestamps();
-    // }
-
-    // public function attendance()
-    // {
-    //     return $this->hasMany(Attendance::class);
-    // }
-
-    // public function attendanceRequests()
-    // {
-    //     return $this->hasMany(AttendanceRequest::class);
-    // }
-
-    // public function notifications()
-    // {
-    //     return $this->hasMany(Notification::class);
-    // }
+    // Other relationships (courses, attendance, etc.) can be added here as needed
 }
+
