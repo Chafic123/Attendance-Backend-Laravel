@@ -3,67 +3,60 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\Student;
 use App\Models\Admin;
 use App\Models\Instructor;
-use App\Models\Department;
+use App\Models\Student;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
-        $csDepartment = Department::firstOrCreate([
-            'name' => 'Business Department',
-        ]);
-
-        $admin = User::create([
-            'first_name' => 'Admin',
-            'last_name' => 'Achour',
-            'email' => 'AchourCM@admin.rhu.edu.lb',
-            'password' => bcrypt('123456'),
-            'status' => 'Admin', 
-        ]);
-
-        Admin::create([
-            'user_id' => $admin->id,
-        ]);
-
-        // $student = User::create([
-        //     'first_name' => 'Student',
-        //     'last_name' => 'Achour',
-        //     'email' => 'AchourCM1@student.rhu.edu.lb',
-        //     'password' => bcrypt('123456'),
-        //     'status' => 'Student',  
+        // Create Admin
+        // $admin = User::create([
+        //     'first_name' => 'Achour',
+        //     'last_name' => 'CM',
+        //     'email' => 'AchourCM@admin.rhu.edu.lb',
+        //     'password' => Hash::make('123456'),
+        //     'status' => 'Admin',
         // ]);
+        // Admin::create(['user_id' => $admin->id]);
 
+        // // Create Instructor
+        $instructor = User::create([
+            'first_name' => 'Achour',
+            'last_name' => 'CM',
+            'email' => 'AchourCM1@instructor.rhu.edu.lb',
+            'password' => Hash::make('123456'),
+            'status' => 'Instructor',
+        ]);
+        Instructor::create([
+            'user_id' => $instructor->id,
+            'username' => 'AchourInstructor',
+            'phone_number' => '81657588',
+            'image' => 'default.png',
+            'department_id' => 1,  
+        ]);
+
+        // Create Student
+        // $student = User::create([
+        //     'first_name' => 'Achour',
+        //     'last_name' => 'CM',
+        //     'email' => 'AchourCM@students.rhu.edu.lb',
+        //     'password' => Hash::make('123456'),
+        //     'status' => 'Student',
+        // ]);
         // Student::create([
         //     'user_id' => $student->id,
-        //     'department_id' => $csDepartment->id, 
-        //     'phone_number' => '81657587',
-        //     'major' => 'Software Engineering',
-        //     'address' => 'Beirut',
-        //     'image' => 'chafic.jpg',
-        //     'video' => 'chafic.mp4',
+        //     'phone_number' => '81657588',
+        //     'major' => 'Computer Science',
+        //     'image' => 'default.png',
+        //     'video' => 'default.mp4',
+        //     'department_id' => 1,  
         // ]);
+        
 
-    //     $instructor = User::create([
-    //         'first_name' => 'Instructor',
-    //         'last_name' => 'Achour',
-    //         'email' => 'AchourCM@instructor.rhu.edu.lb',
-    //         'password' => bcrypt('123456'),
-    //         'status' => 'Instructor', 
-    //     ]);
-
-    //     Instructor::create([
-    //         'user_id' => $instructor->id,
-    //         'username' => 'Chafic123',
-    //         'phone_number' => '81657586',
-    //         'image' => 'chafic.jpg',
-    //         'department_id' => $csDepartment->id, 
-    //     ]);
+        echo "Users created successfully! ";
     }
 }

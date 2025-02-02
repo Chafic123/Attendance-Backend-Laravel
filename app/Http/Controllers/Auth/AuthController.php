@@ -5,83 +5,70 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Student;
-use App\Models\Instructor;
-use App\Models\Admin;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-
-        $validator = Validator::make($request->all(), [
-            'student_id' => 'required_without:user_id|string',
-            'user_id' => 'required_without:student_id|string',
-            'password' => 'required|string|min:6',
-            'email' => 'required_without:student_id|email', 
+        $request->validate([
+            'identifier' => 'required|string',  
+            'password' => 'required|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
+        $identifier = $request->identifier;
+        $password = $request->password;
 
-        if ($request->has('student_id')) {
-            $student = Student::where('student_id', $request->student_id)->first();
+        $student = Student::where('student_id', $identifier)->first();
 
-            if (!$student) {
-                return response()->json(['error' => 'Student not found'], 404);
+        if ($student) {
+            return $this->loginUser($student->user, $password, 'Student');
+        } else {
+            $user = User::where('email', $identifier)->first();
+            if ($user) {
+                if ($user->status === 'Admin') {
+                    return $this->loginUser($user, $password, 'Admin');
+                } elseif ($user->status === 'Instructor') {
+                    return $this->loginUser($user, $password, 'Instructor');
+                }
             }
 
-            if (Auth::attempt(['user_id' => $student->user_id, 'password' => $request->password])) {
-                $user = Auth::user();
-                $token = $user->createToken('studentToken')->accessToken;
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+    }
 
+    private function loginUser($user, $password, $role)
+    {
+        if ($role === 'Student') {
+            
+            if (Hash::check($password, $user->password)) {
+               dd($user);
+                $token = $user->createToken('StudentToken')->plainTextToken;
                 return response()->json([
                     'token' => $token,
                     'user' => $user,
-                    'status' => 'Student',
+                    'role' => 'Student',
+                ], 200);
+            }
+        } else {
+            if (Auth::attempt(['email' => $user->email, 'password' => $password])) {
+                $token = $user->createToken($role . 'Token')->plainTextToken;
+                return response()->json([
+                    'token' => $token,
+                    'user' => $user,
+                    'role' => $role,
                 ], 200);
             }
         }
 
-        if ($request->has('email') && !$request->has('student_id')) {
-            $admin = Admin::where('email', $request->email)->first(); 
+        return response()->json(['error' => 'Invalid credentials'], 401);
+    }
 
-            if ($admin && Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-                $user = Auth::user();
-                $token = $user->createToken('adminToken')->accessToken;
-
-                return response()->json([
-                    'token' => $token,
-                    'user' => $user,
-                    'status' => 'Admin',
-                ], 200);
-            } else {
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
-        }
-
-        if ($request->has('email') && !$request->has('student_id')) {
-            $instructor = Instructor::where('email', $request->email)->first();
-
-            if (!$instructor) {
-                return response()->json(['error' => 'Instructor not found'], 404);
-            }
-
-            if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-                $user = Auth::user();
-                $token = $user->createToken('instructorToken')->accessToken;
-
-                return response()->json([
-                    'token' => $token,
-                    'user' => $user,
-                    'status' => 'Instructor',
-                ], 200);
-            }
-        }
-
-        return response()->json(['error' => 'Unauthorized'], 401);
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+        return response()->json(['message' => 'Logout successful']);
     }
 }
