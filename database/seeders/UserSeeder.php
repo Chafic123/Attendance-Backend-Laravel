@@ -24,37 +24,37 @@ class UserSeeder extends Seeder
         // Admin::create(['user_id' => $admin->id]);
 
         // // Create Instructor
-        $instructor = User::create([
-            'first_name' => 'Achour',
-            'last_name' => 'CM',
-            'email' => 'AchourCM1@instructor.rhu.edu.lb',
-            'password' => Hash::make('123456'),
-            'status' => 'Instructor',
-        ]);
-        Instructor::create([
-            'user_id' => $instructor->id,
-            'username' => 'AchourInstructor',
-            'phone_number' => '81657588',
-            'image' => 'default.png',
-            'department_id' => 1,  
-        ]);
-
-        // Create Student
-        // $student = User::create([
+        // $instructor = User::create([
         //     'first_name' => 'Achour',
         //     'last_name' => 'CM',
-        //     'email' => 'AchourCM@students.rhu.edu.lb',
+        //     'email' => 'AchourCM1@instructor.rhu.edu.lb',
         //     'password' => Hash::make('123456'),
-        //     'status' => 'Student',
+        //     'status' => 'Instructor',
         // ]);
-        // Student::create([
-        //     'user_id' => $student->id,
+        // Instructor::create([
+        //     'user_id' => $instructor->id,
+        //     'username' => 'AchourInstructor',
         //     'phone_number' => '81657588',
-        //     'major' => 'Computer Science',
         //     'image' => 'default.png',
-        //     'video' => 'default.mp4',
         //     'department_id' => 1,  
         // ]);
+
+        // Create Student
+        $student = User::create([
+            'first_name' => 'Achour',
+            'last_name' => 'CM1',
+            'email' => 'AchourCM1@students.rhu.edu.lb',
+            'password' => Hash::make('123456'),
+            'status' => 'Student',
+        ]);
+        Student::create([
+            'user_id' => $student->id,
+            'phone_number' => '81657588',
+            'major' => 'Computer Science',
+            'image' => 'default.png',
+            'video' => 'default.mp4',
+            'department_id' => 1,  
+        ]);
         
 
         echo "Users created successfully! ";
