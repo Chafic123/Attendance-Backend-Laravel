@@ -26,9 +26,17 @@ class Instructor extends Model
         return $this->belongsTo(User::class);
     }
 
-
     public function department()
     {
         return $this->belongsTo(Department::class);
     }
+
+    public function courses(){
+        return $this->belongsToMany(Course::class , 'course_instructor')->withTimestamps();
+    }
+
+    public function notifications(){
+        return $this->hasMany(Notification::class );
+    }
+
 }

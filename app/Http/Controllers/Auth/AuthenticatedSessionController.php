@@ -30,14 +30,14 @@ class AuthenticatedSessionController extends Controller
         if ($student) {
             $user = $student->user; 
         }
-    }
+}
 
-    if ($user && Hash::check($password, $user->password)) {
+    if ($user && Hash::check($password, hashedValue: $user->password)) {
         Auth::login($user); 
 
         return response()->json([
             'message' => 'Login successful!',
-            'user' => $user,
+            'user' => $user->status,
         ]);
     }
 
