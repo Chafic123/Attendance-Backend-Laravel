@@ -13,7 +13,8 @@ class Term extends Model
         'end_date',
     ];
 
-    public function courses(){
+    public function courses()
+    {
         return $this->belongsToMany(Course::class);
     }
 }

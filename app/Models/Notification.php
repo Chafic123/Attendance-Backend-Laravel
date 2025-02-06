@@ -13,12 +13,13 @@ class Notification extends Model
         'type'
     ];
 
-    public function instructor(){
+    public function instructor()
+    {
         return $this->belongsTo(Instructor::class);
     }
 
-    public function student(){
+    public function student()
+    {
         return $this->belongsTo(Student::class);
     }
-    
 }

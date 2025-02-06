@@ -31,12 +31,13 @@ class Instructor extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function courses(){
-        return $this->belongsToMany(Course::class , 'course_instructor')->withTimestamps();
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_instructor')->withTimestamps();
     }
 
-    public function notifications(){
-        return $this->hasMany(Notification::class );
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
-
 }

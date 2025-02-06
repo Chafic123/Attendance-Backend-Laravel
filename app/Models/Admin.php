@@ -19,8 +19,6 @@ class Admin extends Model
     ];
 
     /**
-     * Define the relationship with the User model.
-     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
@@ -29,12 +27,6 @@ class Admin extends Model
     }
 
     /**
-     * Define the relationship with the Student model.
-     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    // public function students()
-    // {
-    //     return $this->hasMany(Student::class);
-    // }
 }

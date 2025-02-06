@@ -15,6 +15,4 @@ class Schedule extends Model
     {
         return $this->hasMany(CourseSession::class);
     }
-
-
 }

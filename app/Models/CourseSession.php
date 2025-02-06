@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class CourseSession extends Model
 {
-    protected $table = 'course_sessions'; 
+    protected $table = 'course_sessions';
 
     protected $fillable = [
         'course_id',
         'schedule_id',
-        'start_time',  
+        'start_time',
         'end_time',
     ];
 

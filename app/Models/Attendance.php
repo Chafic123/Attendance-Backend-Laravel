@@ -12,16 +12,18 @@ class Attendance extends Model
         'is_present'
     ];
 
-    public function student(){
+    public function student()
+    {
         return $this->belongsTo(Student::class);
     }
 
-    public function course_session(){
+    public function course_session()
+    {
         return $this->belongsTo(CourseSession::class);
     }
 
-    public function attendanceRequest(){
+    public function attendanceRequest()
+    {
         return $this->hasMany(AttendanceRequest::class);
     }
-
 }

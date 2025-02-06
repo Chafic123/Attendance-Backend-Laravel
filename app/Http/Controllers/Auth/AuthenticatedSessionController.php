@@ -1,66 +1,54 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Student;
 use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
     public function store(Request $request)
-{
-    $request->validate([
-        'identifier' => 'required|string',
-        'password' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-    $identifier = $request->input('identifier');
-    $password = $request->input('password');
+        $identifier = $request->input('identifier');
+        $password = $request->input('password');
 
-    $user = null;
+        $user = filter_var($identifier, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $identifier)->first()
+            : optional(Student::where('student_id', $identifier)->first())->user;
 
-    if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
-        $user = User::where('email', $identifier)->first();
-    } else {
-        $student = Student::where('student_id', $identifier)->first();
-        if ($student) {
-            
-            $user = $student->user; 
+        if (!$user || !Hash::check($password, $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
-}
 
-// dd($user->password);
-// dd(hashedValue: $user->password);
-// dd(Hash::check($password, hashedValue: $user->password));
+        $token = $user->createToken("{$user->first_name}'s Token")->plainTextToken;
 
-// $hashedvalue= Hash::make("123456");
-// dd($hashedvalue);
-// dd(Hash::check("123456", $hashedvalue));
-
-
-    if ($user && Hash::check($password, hashedValue: $user->password)) {
-       
-        // Auth::login($user); 
-//  dd($user);
         return response()->json([
             'message' => 'Login successful!',
-            'user' => $user->status,
-        ]);
+            'status' => $user->status,
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ])
+            ->cookie('access_token', $token, 240, null, null, true, true);
     }
-
-    return response()->json(['message' => 'Invalid credentials'], 401);
-}
 
     public function destroy(Request $request)
     {
-        // Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $user = $request->user();
+        if ($user) {
+            $request->user()->currentAccessToken()->delete();
+            return response()->json(['status' => 'success', 'message' => 'Logged out']);
+        }
 
-        return response()->json(['status' => 'success', 'message' => 'Logged out']);
+        return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
     }
 }

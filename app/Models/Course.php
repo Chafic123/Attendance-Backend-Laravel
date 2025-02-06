@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Student;
 use App\Models\Session;
+
 class Course extends Model
 {
     protected $fillable = [
@@ -23,12 +24,13 @@ class Course extends Model
         return $this->belongsToMany(Student::class, 'course_student')->withTimestamps();
     }
 
-    public function instructors(){
+    public function instructors()
+    {
         return $this->belongsToMany(Instructor::class, 'course_instructor')->withTimestamps();
     }
 
-    public function term(){
+    public function term()
+    {
         return $this->belongsToMany(Term::class);
     }
-
 }

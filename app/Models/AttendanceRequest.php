@@ -11,16 +11,16 @@ class AttendanceRequest extends Model
         'student_id',
         'attendance_id',
         'reason',
-        'request_date'];
+        'request_date'
+    ];
 
-    public function student(){
+    public function student()
+    {
         return $this->belongsTo(Student::class);
     }
 
-    public function attendance(){
+    public function attendance()
+    {
         return $this->belongsTo(Attendance::class);
     }
-
 }
-
-

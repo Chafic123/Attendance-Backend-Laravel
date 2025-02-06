@@ -23,7 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'status',
-        
+
     ];
 
     /**
@@ -72,5 +72,4 @@ class User extends Authenticatable
     {
         return $this->hasOne(Instructor::class);
     }
-
 }

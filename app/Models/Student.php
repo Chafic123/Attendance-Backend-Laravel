@@ -26,7 +26,7 @@ class Student extends Model
         static::creating(function ($student) {
             $currentYear = date('Y');
 
-            $studentCount = Student::count() + 1; 
+            $studentCount = Student::count() + 1;
             $student->student_id = $currentYear . str_pad($studentCount, 4, '0', STR_PAD_LEFT);
         });
     }
@@ -41,20 +41,23 @@ class Student extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function attendance(){
+    public function attendance()
+    {
         return $this->hasMany(Attendance::class);
     }
 
-    public function Courses(){
-        return $this->belongsToMany(Course::class, 'course_student')->withTimestamps();    
+    public function Courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_student')->withTimestamps();
     }
 
-    public function notifications(){
-        return $this->hasMany(Notification::class );
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
 
-    public function attendance_requests(){
-        return $this->hasMany(AttendanceRequest::class );
+    public function attendance_requests()
+    {
+        return $this->hasMany(AttendanceRequest::class);
     }
-
 }
