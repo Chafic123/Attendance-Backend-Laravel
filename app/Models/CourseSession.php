@@ -4,16 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Session extends Model
+class CourseSession extends Model
 {
-    // create the model of migration session 
+    protected $table = 'course_sessions'; 
+
     protected $fillable = [
         'course_id',
         'schedule_id',
-        'start_Time',
+        'start_time',  
         'end_time',
     ];
-
 
     public function course()
     {
@@ -25,7 +25,8 @@ class Session extends Model
         return $this->belongsTo(Schedule::class);
     }
 
-    public function attendance(){
+    public function attendances()
+    {
         return $this->hasMany(Attendance::class);
     }
 }

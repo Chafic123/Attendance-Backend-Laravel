@@ -9,3 +9,4 @@ Route::get('/sanctum/csrf-cookie', function () {
 });
 
 require __DIR__.'/auth.php';
+

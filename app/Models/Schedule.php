@@ -11,9 +11,9 @@ class Schedule extends Model
         'Date',
     ];
 
-    public function sessions()
+    public function course_sessions()
     {
-        return $this->hasMany(Session::class);
+        return $this->hasMany(CourseSession::class);
     }
 
 

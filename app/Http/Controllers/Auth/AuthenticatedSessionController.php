@@ -28,13 +28,24 @@ class AuthenticatedSessionController extends Controller
     } else {
         $student = Student::where('student_id', $identifier)->first();
         if ($student) {
+            
             $user = $student->user; 
         }
 }
 
-    if ($user && Hash::check($password, hashedValue: $user->password)) {
-        Auth::login($user); 
+// dd($user->password);
+// dd(hashedValue: $user->password);
+// dd(Hash::check($password, hashedValue: $user->password));
 
+// $hashedvalue= Hash::make("123456");
+// dd($hashedvalue);
+// dd(Hash::check("123456", $hashedvalue));
+
+
+    if ($user && Hash::check($password, hashedValue: $user->password)) {
+       
+        // Auth::login($user); 
+//  dd($user);
         return response()->json([
             'message' => 'Login successful!',
             'user' => $user->status,
@@ -46,7 +57,7 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request)
     {
-        Auth::logout();
+        // Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

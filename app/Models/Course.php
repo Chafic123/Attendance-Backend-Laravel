@@ -13,9 +13,9 @@ class Course extends Model
         'Section',
     ];
     // create the relation with the student 
-    public function sessions()
+    public function course_sessions()
     {
-        return $this->hasMany(Session::class);
+        return $this->hasMany(CourseSession::class);
     }
 
     public function students()

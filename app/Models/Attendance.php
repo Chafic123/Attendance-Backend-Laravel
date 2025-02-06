@@ -16,8 +16,8 @@ class Attendance extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function session(){
-        return $this->belongsTo(Session::class);
+    public function course_session(){
+        return $this->belongsTo(CourseSession::class);
     }
 
     public function attendanceRequest(){
