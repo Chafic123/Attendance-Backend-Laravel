@@ -13,7 +13,6 @@ class Course extends Model
         'Room',
         'Section',
     ];
-    // create the relation with the student 
     public function course_sessions()
     {
         return $this->hasMany(CourseSession::class);
@@ -29,8 +28,8 @@ class Course extends Model
         return $this->belongsToMany(Instructor::class, 'course_instructor')->withTimestamps();
     }
 
-    public function term()
+    public function terms()
     {
-        return $this->belongsToMany(Term::class);
+        return $this->belongsToMany(Term::class, 'course_term');
     }
 }
