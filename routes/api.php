@@ -7,8 +7,9 @@ use App\Http\Controllers\Admin\AdminController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth:sanctum');
 });
+
 
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
 

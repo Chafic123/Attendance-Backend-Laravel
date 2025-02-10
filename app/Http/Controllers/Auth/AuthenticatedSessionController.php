@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\AuthService;
-
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 class AuthenticatedSessionController extends Controller
 {
     protected $authService;
@@ -33,29 +34,43 @@ class AuthenticatedSessionController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
+        $cookieExpiration = $request->input('remember_me', false) ? 10080 : 120;
+
         return response()->json([
             'message' => 'Login successful!',
             'status' => $authResult['user']->status,
             'user' => $authResult['user']->makeHidden(['password', 'remember_token']),
             'access_token' => $authResult['token'],
             'token_type' => $authResult['token_type'],
+            'expires_at' => $authResult['expires_at'],
         ])->cookie(
             'access_token',
             $authResult['token'],
-            $request->input('remember_me', false) ? 10080 : 120,
+            $cookieExpiration, 
             '/',
             null,
-            true,
+            true, 
             true,
             false,
             'Strict'
         );
     }
 
-    public function destroy(Request $request)
-    {
-        $response = $this->authService->logoutUser($request->user());
+    public function destroy()
+{
+    $user = Auth::user(); 
 
-        return response()->json($response, $response['status'] === 'success' ? 200 : 401);
+    if (!$user instanceof \App\Models\User) {
+        return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
     }
+
+    $user->update(['remember_token' => null]); 
+    
+    if (method_exists($user, 'tokens')) { 
+        $user->tokens()->delete(); 
+    }
+
+    return response()->json(['status' => 'success', 'message' => 'Logged out successfully'])
+        ->cookie('access_token', '', -1); 
+}
 }

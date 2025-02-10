@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Student;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AuthService
 {
@@ -16,22 +16,30 @@ class AuthService
         $user = filter_var($identifier, FILTER_VALIDATE_EMAIL)
             ? User::where('email', $identifier)->first()
             : optional(Student::where('student_id', $identifier)->first())->user;
-
+    
         if (!$user || !Hash::check($password, $user->password)) {
             return null;
         }
-
+    
         config(['session.lifetime' => $rememberMe ? 10080 : 120]); // 7 days or 2 hours
-
+    
         $tokenExpiration = $rememberMe ? Carbon::now()->addDays(7) : Carbon::now()->addHours(2);
-
+    
         $token = $user->createToken("{$user->first_name}'s Token")->plainTextToken;
-
-        // Store expiration 
+    
+        // expiration 
         $user->tokens()->latest()->first()->update([
             'expires_at' => $tokenExpiration,
         ]);
-
+    
+        if ($rememberMe) {
+            $user->remember_token = Str::random(60);
+        } else {
+            $user->remember_token = null; 
+        }
+        
+        $user->save(); 
+    
         return [
             'user' => $user,
             'token' => $token,
@@ -43,10 +51,10 @@ class AuthService
     public function logoutUser($user)
     {
         if ($user) {
-            $user->tokens()->delete(); // Logout from all devices
-            return ['status' => 'success', 'message' => 'Logged out'];
+            $user->remember_token = null;
+            $user->save();
+            $user->tokens()->delete(); 
         }
-
-        return ['status' => 'error', 'message' => 'Unauthorized'];
+        return ['status' => 'success', 'message' => 'Logged out successfully'];
     }
 }

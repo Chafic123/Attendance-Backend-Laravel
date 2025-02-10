@@ -41,16 +41,16 @@ class UserSeeder extends Seeder
 
         // // Create Student
         $student = User::create([
-            'first_name' => 'Adam',
+            'first_name' => 'Ahmad',
             'last_name' => 'Achour',
-            'email' => 'AdamCM@students.rhu.edu.lb',
-            'password' => "AdamCM",
+            'email' => 'AhmadCH@students.rhu.edu.lb',
+            'password' => "AhmadCH",
             'status' => 'Student',
         ]);
         Student::create([
             'user_id' => $student->id,
             'phone_number' => '81657999',
-            'major' => 'Mechanical Engineering',
+            'major' => 'Electrical Engineering',
             'image' => 'default.png',
             'video' => 'default.mp4',
             'department_id' => 3,
