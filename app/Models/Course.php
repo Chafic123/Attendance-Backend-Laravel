@@ -13,6 +13,9 @@ class Course extends Model
         'Code',
         'Room',
         'Section',
+        'day_of_week',
+        'start_time',
+        'end_time',
     ];
     public function course_sessions()
     {

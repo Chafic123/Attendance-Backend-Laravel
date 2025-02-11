@@ -10,9 +10,7 @@ class CourseSession extends Model
 
     protected $fillable = [
         'course_id',
-        'schedule_id',
-        'start_time',
-        'end_time',
+        'date'
     ];
 
     public function course()

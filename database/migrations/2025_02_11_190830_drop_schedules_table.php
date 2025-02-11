@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('courses', function (Blueprint $table) {
-            $table->string("Code")->after('name')->default("COSC");
+        Schema::table('schedules', function (Blueprint $table) {
+            Schema::dropIfExists('schedules');
         });
     }
 
@@ -21,8 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('courses', function (Blueprint $table) {
-            $table->dropColumn("Code");
+        Schema::table('schedules', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
         });
     }
 };
