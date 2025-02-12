@@ -24,37 +24,37 @@ class UserSeeder extends Seeder
         // Admin::create(['user_id' => $admin->id]);
 
         // // Create Instructor
-        // $instructor = User::create([
-        //     'first_name' => 'Achour',
-        //     'last_name' => 'CM',
-        //     'email' => 'AchourCM@instructor.rhu.edu.lb',
-        //     'password' => 'shafi-2457',
-        //     'status' => 'Instructor',
-        // ]);
-        // Instructor::create([
-        //     'user_id' => $instructor->id,
-        //     'username' => 'AchourInstructor',
-        //     'phone_number' => '81657588',
-        //     'image' => 'default.png',
-        //     'department_id' => 2,
-        // ]);
-
-        // // Create Student
-        $student = User::create([
-            'first_name' => 'Ahmad',
-            'last_name' => 'Achour',
-            'email' => 'AhmadCH@students.rhu.edu.lb',
-            'password' => "AhmadCH",
-            'status' => 'Student',
+        $instructor = User::create([
+            'first_name' => 'Ali',
+            'last_name' => 'Rammal',
+            'email' => 'RammalAl@instructor.rhu.edu.lb',
+            'password' => 'shafi-2450',
+            'status' => 'Instructor',
         ]);
-        Student::create([
-            'user_id' => $student->id,
-            'phone_number' => '81657999',
-            'major' => 'Electrical Engineering',
+        Instructor::create([
+            'user_id' => $instructor->id,
+            'username' => 'AchourInstructor',
+            'phone_number' => '81657588',
             'image' => 'default.png',
-            'video' => 'default.mp4',
             'department_id' => 3,
         ]);
+
+        // // Create Student
+        // $student = User::create([
+        //     'first_name' => 'Ahmad',
+        //     'last_name' => 'Achour',
+        //     'email' => 'AhmadCH@students.rhu.edu.lb',
+        //     'password' => "AhmadCH",
+        //     'status' => 'Student',
+        // ]);
+        // Student::create([
+        //     'user_id' => $student->id,
+        //     'phone_number' => '81657999',
+        //     'major' => 'Electrical Engineering',
+        //     'image' => 'default.png',
+        //     'video' => 'default.mp4',
+        //     'department_id' => 3,
+        // ]);
 
         echo "Student created";
     }

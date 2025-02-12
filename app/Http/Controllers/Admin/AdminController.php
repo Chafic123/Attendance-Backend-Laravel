@@ -71,4 +71,57 @@ class AdminController extends Controller
 
         return response()->json($students);
     }
+
+
+
+    public function getCoursesForStudent($studentId)
+    {
+        $student = Student::find($studentId);
+
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        $courses = $student->courses()->with(['instructors.user' => function ($query) {
+            $query->select('users.id', 'users.first_name', 'users.last_name');
+        }])->get();
+
+        $coursesWithInstructors = $courses->map(function ($course) {
+            $instructors = $course->instructors->map(function ($instructor) {
+                return [
+                    'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name
+                ];
+            });
+
+            return [
+                'course_code' => $course->Code,
+                'course_name' => $course->name,
+                'section' => $course->Section, 
+                'instructors' => $instructors,
+            ];
+        });
+
+        return response()->json($coursesWithInstructors);
+    }
+
+    public function getInstructorForCourseSection($courseId, $section)
+    {
+
+        $course = Course::where('id', $courseId)
+            ->where('section', $section)
+            ->first();
+
+        if (!$course) {
+            return response()->json(['message' => 'Course section not found'], 404);
+        }
+
+        $instructor = $course->instructors->first();
+        if (!$instructor) {
+            return response()->json(['message' => 'Instructor not found for this section'], 404);
+        }
+
+        return response()->json([
+            'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name,
+        ]);
+    }
 }

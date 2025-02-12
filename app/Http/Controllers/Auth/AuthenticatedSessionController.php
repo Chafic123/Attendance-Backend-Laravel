@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\AuthService;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+
 class AuthenticatedSessionController extends Controller
 {
     protected $authService;
@@ -20,7 +21,7 @@ class AuthenticatedSessionController extends Controller
     {
         $request->validate([
             'identifier' => 'required|string|max:255',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|',
             'remember_me' => 'boolean',
         ]);
 
@@ -46,10 +47,10 @@ class AuthenticatedSessionController extends Controller
         ])->cookie(
             'access_token',
             $authResult['token'],
-            $cookieExpiration, 
+            $cookieExpiration,
             '/',
             null,
-            true, 
+            true,
             true,
             false,
             'Strict'
@@ -57,20 +58,20 @@ class AuthenticatedSessionController extends Controller
     }
 
     public function destroy()
-{
-    $user = Auth::user(); 
+    {
+        $user = Auth::user();
 
-    if (!$user instanceof \App\Models\User) {
-        return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+        if (!$user instanceof \App\Models\User) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+        }
+
+        $user->update(['remember_token' => null]);
+
+        if (method_exists($user, 'tokens')) {
+            $user->tokens()->delete();
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Logged out successfully'])
+            ->cookie('access_token', '', -1);
     }
-
-    $user->update(['remember_token' => null]); 
-    
-    if (method_exists($user, 'tokens')) { 
-        $user->tokens()->delete(); 
-    }
-
-    return response()->json(['status' => 'success', 'message' => 'Logged out successfully'])
-        ->cookie('access_token', '', -1); 
-}
 }

@@ -2,50 +2,61 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Course;
-use App\Models\User;
 use App\Models\Instructor;
-use App\Models\CourseSession;
-use App\Models\Student;
-use App\Http\Controllers\Controller;
+use App\Models\User;
 
 class AddCourseController extends Controller
 {
-
-    public function addCourse(Request $request)
+    public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'Code' => 'required|string|unique:courses,Code,NULL,id,Section,' . $request->input('Section'),
+            'Room' => 'required|string',
+            'Section' => 'required|string',
+            'day_of_week' => 'required|string',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
+            'instructor_first_name' => 'required|string',
+            'instructor_last_name' => 'required|string',
+            'instructor_email' => 'required|email|exists:users,email',
+        ]);
 
-        $validated = $request->validate(
+        $user = User::where('email', $validated['instructor_email'])->first();
 
-            [
-                'name' => 'required|string',
-                'code' => 'required|string|unique:courses,code',
-                'room' => 'required|string',
-                'section' => 'required|string',
-                'instructor_email' => 'required|email|exists:instructors,email',
-                'session_start_time' => 'required|date',
-                'session_end_time' => 'required|date',
-                'schedue' => 'required|array',
-            ]
-            );
-            $instructor = Instructor::where('email', $validated['instructor_email'])->first();
-            if (!$instructor) {
-                return response()->json(['message' => 'Instructor not found'], 404);
-            }
+        if (!$user || $user->first_name !== $validated['instructor_first_name'] || $user->last_name !== $validated['instructor_last_name']) {
+            return response()->json([
+                'message' => 'Instructor name and email do not match our records.'
+            ], 422);
+        }
 
-            $session = CourseSession::create([
-                'start_time' => $validated['session_start_time'],
-                'end_time' => $validated['session_end_time'],
-            ]);
-            
-            $course = Course::create([
-                'name' => $validated['name'],
-                'code' => $validated['code'],
-                'room' => $validated['room'],
-                'section' => $validated['section'],
-                'instructor_id' => $instructor->id,
-                'session_id' => $session->id,
-            ]);
+        $instructor = Instructor::where('user_id', $user->id)->first();
+
+        if (!$instructor) {
+            return response()->json([
+                'message' => 'No instructor record found for the provided email.'
+            ], 422);
+        }
+
+        $course = Course::create([
+            'name' => $validated['name'],
+            'Code' => $validated['Code'],
+            'Room' => $validated['Room'],
+            'Section' => $validated['Section'],
+            'day_of_week' => $validated['day_of_week'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+        ]);
+
+        $course->instructors()->attach($instructor->id);
+
+        return response()->json([
+            'message' => 'Course added successfully with instructor assigned',
+            'course' => $course,
+            'instructor' => $user
+        ], 201);
     }
 }
