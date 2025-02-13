@@ -18,11 +18,6 @@ class CourseSession extends Model
         return $this->belongsTo(Course::class);
     }
 
-    public function schedule()
-    {
-        return $this->belongsTo(Schedule::class);
-    }
-
     public function attendances()
     {
         return $this->hasMany(Attendance::class);

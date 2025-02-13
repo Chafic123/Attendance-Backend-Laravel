@@ -25,13 +25,10 @@ class Student extends Model
     {
         static::creating(function ($student) {
             $currentYear = date('Y');
-    
             $studentCount = Student::where('student_id', 'LIKE', "$currentYear%")->count() + 1;
-    
             $student->student_id = $currentYear . str_pad($studentCount, 4, '0', STR_PAD_LEFT);
         });
     }
-    
 
     public function user()
     {
@@ -48,7 +45,7 @@ class Student extends Model
         return $this->hasMany(Attendance::class);
     }
 
-    public function Courses()
+    public function courses()
     {
         return $this->belongsToMany(Course::class, 'course_student')->withTimestamps();
     }

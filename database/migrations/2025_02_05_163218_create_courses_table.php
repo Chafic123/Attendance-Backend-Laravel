@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string("Code")->default("COSC");
             $table->integer('Section');
             $table->string('Room');
+            $table->string('day_of_week');
+            $table->time('start_time');
+            $table->time('end_time');
             $table->timestamps();
         });
     }

@@ -10,6 +10,9 @@ use App\Http\Controllers\Controller;
 
 class AdminController extends Controller
 {
+    /**
+     * Get all courses with related instructors and departments.
+     */
     public function getAllCourses()
     {
         $courses = Course::with([
@@ -24,7 +27,9 @@ class AdminController extends Controller
         return response()->json($courses);
     }
 
-
+    /**
+     * Get all instructors.
+     */
     public function getAllInstructors()
     {
         $instructors = User::where('status', 'Instructor')
@@ -37,20 +42,25 @@ class AdminController extends Controller
         return response()->json($instructors);
     }
 
+    /**
+     * Get all students with their associated user data.
+     */
     public function getAllStudents()
     {
         $students = Student::with([
             'user:id,first_name,last_name'
-        ])->select('id', 'user_id', 'major', 'image', 'video', 'student_id')
-            ->paginate(12);
+        ])
+        ->select('id', 'user_id', 'major', 'image', 'video', 'student_id')
+        ->paginate(12);
 
-        return response()->json($students);
+        return response()->json($students); // image will be Base64 due to the mutator in the model
     }
 
-
+    /**
+     * Get all students enrolled in a particular course.
+     */
     public function getAllAdminStudentsCourse($courseId)
     {
-
         $course = Course::find($courseId);
 
         if (!$course) {
@@ -64,7 +74,7 @@ class AdminController extends Controller
                 'student_id' => $student->student_id,
                 'first_name' => optional($student->user)->first_name,
                 'last_name' => optional($student->user)->last_name,
-                'image' => $student->image,
+                'image' => $student->image,  // image is automatically Base64 encoded due to the mutator
                 'video' => $student->video,
             ];
         });
@@ -72,8 +82,9 @@ class AdminController extends Controller
         return response()->json($students);
     }
 
-
-
+    /**
+     * Get courses for a specific student, including instructor details.
+     */
     public function getCoursesForStudent($studentId)
     {
         $student = Student::find($studentId);
@@ -96,7 +107,7 @@ class AdminController extends Controller
             return [
                 'course_code' => $course->Code,
                 'course_name' => $course->name,
-                'section' => $course->Section, 
+                'section' => $course->Section,
                 'instructors' => $instructors,
             ];
         });
@@ -104,9 +115,11 @@ class AdminController extends Controller
         return response()->json($coursesWithInstructors);
     }
 
+    /**
+     * Get instructor details for a specific course and section.
+     */
     public function getInstructorForCourseSection($courseId, $section)
     {
-
         $course = Course::where('id', $courseId)
             ->where('section', $section)
             ->first();

@@ -8,14 +8,14 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
-
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
+
+    protected $table = 'users';
+
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array
      */
     protected $fillable = [
         'first_name',
@@ -23,13 +23,10 @@ class User extends Authenticatable
         'email',
         'password',
         'status',
-
     ];
 
     /**
      * The attributes that should be hidden for arrays.
-     *
-     * @var array
      */
     protected $hidden = [
         'password',
@@ -38,8 +35,6 @@ class User extends Authenticatable
 
     /**
      * The attributes that should be cast to native types.
-     *
-     * @var array
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -47,9 +42,6 @@ class User extends Authenticatable
 
     /**
      * Set the user's password.
-     *
-     * @param  string  $value
-     * @return void
      */
     public function setPasswordAttribute($value)
     {
@@ -57,6 +49,7 @@ class User extends Authenticatable
     }
 
     /**
+     * Relationships
      */
     public function admin()
     {
@@ -71,5 +64,12 @@ class User extends Authenticatable
     public function instructor()
     {
         return $this->hasOne(Instructor::class);
+    }
+
+    public function updateProfileAdmin(array $data)
+    {
+        $this->first_name = $data['first_name'];
+        $this->last_name = $data['last_name'];
+        $this->save();
     }
 }

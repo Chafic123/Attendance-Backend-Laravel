@@ -16,7 +16,7 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('/students', [AdminController::class, 'getAllStudents'])->name('admin.students');
     Route::get('/courses', [AdminController::class, 'getAllCourses'])->name('admin.courses');
     Route::get('/courses/{courseId}/students', [AdminController::class, 'getAllAdminStudentsCourse'])->name('admin.admin-student-courses');
-    
+    Route::put('/profile', [AdminController::class, 'updateProfile']); //profile
     Route::post('/courses/add', [AddCourseController::class, 'store'])->name('admin.add-course');
     Route::get('/students/{studentId}/courses', [AdminController::class, 'getCoursesForStudent']);
     Route::get('/user', function (Request $request) {

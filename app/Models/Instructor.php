@@ -20,7 +20,7 @@ class Instructor extends Model
         'phone_number',
         'image',
     ];
-
+    
     public function user()
     {
         return $this->belongsTo(User::class);
