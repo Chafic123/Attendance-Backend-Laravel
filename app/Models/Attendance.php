@@ -9,7 +9,8 @@ class Attendance extends Model
     protected $fillable = [
         'student_id',
         'session_id',
-        'is_present'
+        'is_present',
+        'Attended_at'
     ];
 
     public function student()

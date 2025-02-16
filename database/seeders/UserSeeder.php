@@ -17,33 +17,33 @@ class UserSeeder extends Seeder
         // $admin = User::create([
         //     'first_name' => 'Achour',
         //     'last_name' => 'CM',
-        //     'email' => 'AchourCM1@admin.rhu.edu.lb',
-        //     'password' => 'shafi-2458',
+        //     'email' => 'AchourCM@admin.rhu.edu.lb',
+        //     'password' => '123456',
         //     'status' => 'Admin',
         // ]);
         // Admin::create(['user_id' => $admin->id]);
 
         // // Create Instructor
-        $instructor = User::create([
-            'first_name' => 'Ali',
-            'last_name' => 'Rammal',
-            'email' => 'RammalAl@instructor.rhu.edu.lb',
-            'password' => 'shafi-2450',
-            'status' => 'Instructor',
-        ]);
-        Instructor::create([
-            'user_id' => $instructor->id,
-            'username' => 'AchourInstructor',
-            'phone_number' => '81657588',
-            'image' => 'default.png',
-            'department_id' => 3,
-        ]);
+        // $instructor = User::create([
+        //     'first_name' => 'Roaa',
+        //     'last_name' => 'Soloh',
+        //     'email' => 'SolohRk@instructor.rhu.edu.lb',
+        //     'password' => '123456',
+        //     'status' => 'Instructor',
+        // ]);
+        // Instructor::create([
+        //     'user_id' => $instructor->id,
+        //     'username' => 'Roaa',
+        //     'phone_number' => '81657588',
+        //     'image' => 'default.png',
+        //     'department_id' => 3,
+        // ]);
 
         // // Create Student
         $student = User::create([
-            'first_name' => 'Chafic',
-            'last_name' => 'Achour',
-            'email' => 'AchourCM@students.rhu.edu.lb',
+            'first_name' => 'Osama',
+            'last_name' => 'Aawad',
+            'email' => 'AawadOs@students.rhu.edu.lb',
             'password' => "123456",
             'status' => 'Student',
         ]);

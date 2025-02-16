@@ -3,34 +3,25 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Attendance; // Import the Attendance model
+use App\Models\Attendance;
 use App\Models\CourseSession;
 use App\Models\Student;
 
 class AttendanceSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
-        $courseSessions = CourseSession::all();
+        $sessions = CourseSession::all();
         $students = Student::all();
 
-        if ($courseSessions->isEmpty() || $students->isEmpty()) {
-            echo " No course sessions or students found. Seed them first!";
-            return;
-        }
-
-        foreach ($courseSessions as $courseSession) {
+        foreach ($sessions as $session) {
             foreach ($students as $student) {
-                $isPresent = rand(0, 1) == 1;
-
                 Attendance::create([
-                    'course_session_id' => $courseSession->id,
+                    'course_session_id' => $session->id,
                     'student_id' => $student->id,
-                    'is_present' => $isPresent,
-                ]);
+                    'Attended_at'  => $session->date . ' ' . $session->course->start_time,
+                    'is_present' => rand(0, 1),
+                ]);                    
             }
         }
     }

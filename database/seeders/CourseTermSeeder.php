@@ -18,7 +18,7 @@ class CourseTermSeeder extends Seeder
         $terms = Term::all();
 
         if ($courses->isEmpty() || $terms->isEmpty()) {
-            echo "❌ No courses or terms found. Seed them first!";
+            echo "No courses or terms found. Seed them first!";
             return;
         }
 

@@ -11,15 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attendances', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('course_session_id')
-            ->constrained()
-            ->cascadeOnDelete();
-            $table->foreignId('student_id');
-            $table->boolean('is_present')->default(false);
+        Schema::table('attendances', function (Blueprint $table) {
             $table->timestamp('attended_at')->nullable();
-            $table->timestamps();
         });
     }
 
@@ -28,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attendances');
+        Schema::table('attendances', function (Blueprint $table) {
+            $table->dropColumn('attended_at');
+        });
     }
 };

@@ -3,32 +3,25 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\CourseSession;
 use App\Models\Course;
-use App\Models\Schedule;
-use Carbon\Carbon;
+use App\Services\CourseSessionGenerator;
 
 class CourseSessionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    // Inject CourseSessionGenerator as a dependency
+    protected $sessionGenerator;
+
+    public function __construct(CourseSessionGenerator $sessionGenerator)
     {
-        $course1 = Course::first(); 
-        $schedule1 = Schedule::first();
+        $this->sessionGenerator = $sessionGenerator;
+    }
 
-        if (!$course1 || !$schedule1) {
-            echo " No courses or schedules found. Seed them first!";
-            return;
+    public function run()
+    {
+        $courses = Course::all();
+
+        foreach ($courses as $course) {
+            $this->sessionGenerator->generate($course); 
         }
-
-        CourseSession::create([
-            'course_id' => $course1->id,
-            'schedule_id' => $schedule1->id,
-            'start_time' => Carbon::createFromTime(9, 0, 0), 
-            'end_time' => Carbon::createFromTime(10, 30, 0),
-        ]);
-
     }
 }

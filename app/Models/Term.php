@@ -9,8 +9,8 @@ class Term extends Model
     protected $fillable = [
         'name',
         'year',
-        'start_date',
-        'end_date',
+        'start_time',
+        'end_time',
     ];
 
     public function courses()

@@ -7,39 +7,44 @@ use App\Models\Course;
 
 class CourseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Example seed data
         Course::create([
             'name' => 'Introduction to Programming',
+            'Code' => 'COSC214',
             'Room' => 'H102',
             'Section' => '1',
+            'day_of_week' => 'MW',
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
         ]);
         Course::create([
             'name' => 'Introduction to Programming',
+            'Code' => 'COSC214',
             'Room' => 'H104',
             'Section' => '2',
+            'day_of_week' => 'MW',
+            'start_time' => '02:00:00',
+            'end_time' => '4:00:00',
         ]);
-
         Course::create([
-            'name' => 'Data Structures',
-            'Room' => 'B202',
-            'Section' => '1',
-        ]);
-
-        Course::create([
-            'name' => 'Database Systems',
+            'name' => 'Web Development',
+            'Code' => 'COSC333',
             'Room' => 'I228',
             'Section' => '1',
+            'day_of_week' => 'TR',
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
         ]);
 
         Course::create([
-            'name' => 'Operating Systems',
-            'Room' => 'H104',
+            'name' => 'Advanced Web Development',
+            'Code' => 'COSC424',
+            'Room' => 'I204',
             'Section' => '1',
+            'day_of_week' => 'TR',
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
         ]);
     }
 }
