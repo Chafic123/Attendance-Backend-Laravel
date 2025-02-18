@@ -2,26 +2,61 @@
 
 namespace Database\Seeders;
 
+// \App\Models\CourseSession::truncate();
+
 use Illuminate\Database\Seeder;
-use App\Models\Course;
-use App\Services\CourseSessionGenerator;
+use Carbon\Carbon;
+use App\Models\Term;
+use App\Models\CourseSession;
 
 class CourseSessionSeeder extends Seeder
 {
-    // Inject CourseSessionGenerator as a dependency
-    protected $sessionGenerator;
-
-    public function __construct(CourseSessionGenerator $sessionGenerator)
-    {
-        $this->sessionGenerator = $sessionGenerator;
-    }
-
     public function run()
     {
-        $courses = Course::all();
+        //only term 2
+        $term = Term::find(2);
+
+        if (!$term) {
+            $this->command->info('Spring term  not found.');
+            return;
+        }
+
+        $startDate = Carbon::parse($term->start_time);
+        $endDate   = Carbon::parse($term->end_time);
+
+        $courses = $term->courses;
 
         foreach ($courses as $course) {
-            $this->sessionGenerator->generate($course); 
+            $currentDate = $startDate->copy();
+            while ($currentDate->lte($endDate)) {
+                if ($this->matchesCourseDays($course->day_of_week, $currentDate)) {
+                    CourseSession::firstOrCreate([
+                        'course_id' => $course->id,
+                        'date'      => $currentDate->format('Y-m-d'),
+                    ], [
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+                $currentDate->addDay();
+            }
         }
+    }
+
+    private function matchesCourseDays(string $dayOfWeekString, Carbon $date): bool
+    {
+        $map = [
+            0 => 'U', 
+            1 => 'M', 
+            2 => 'T', 
+            3 => 'W', 
+            4 => 'R', 
+            5 => 'F', 
+            6 => 'S', 
+        ];
+
+        $letter = $map[$date->dayOfWeek];
+
+        return str_contains($dayOfWeekString, $letter);
     }
 }
