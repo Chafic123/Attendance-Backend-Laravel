@@ -2,26 +2,37 @@
 
 namespace Database\Seeders;
 
+
+\App\Models\Attendance::truncate();
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 use App\Models\Attendance;
-use App\Models\CourseSession;
 use App\Models\Student;
+use App\Models\CourseSession;
 
 class AttendanceSeeder extends Seeder
 {
     public function run()
     {
-        $sessions = CourseSession::all();
+
+        $courseSessions = CourseSession::all();
+
         $students = Student::all();
 
-        foreach ($sessions as $session) {
+        foreach ($courseSessions as $session) {
             foreach ($students as $student) {
+
+                $isPresent = rand(1, 100) <= 70; 
+
+                $attendantAt = Carbon::parse($session->date)
+                    ->setTime(rand(8, 10), rand(0, 59)); 
+
                 Attendance::create([
                     'course_session_id' => $session->id,
-                    'student_id' => $student->id,
-                    'Attended_at'  => $session->date . ' ' . $session->course->start_time,
-                    'is_present' => rand(0, 1),
-                ]);                    
+                    'student_id'        => $student->id,
+                    'is_present'        => $isPresent, 
+                    'attended_at'      => $attendantAt,
+                ]);
             }
         }
     }

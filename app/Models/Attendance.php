@@ -10,7 +10,7 @@ class Attendance extends Model
         'student_id',
         'session_id',
         'is_present',
-        'Attended_at'
+        'attended_at'
     ];
 
     public function student()
