@@ -74,6 +74,7 @@ class AdminController extends Controller
                 'student_id' => $student->student_id,
                 'first_name' => optional($student->user)->first_name,
                 'last_name' => optional($student->user)->last_name,
+                'major' => $student->major,
                 'image' => $student->image,  // image is automatically Base64 encoded due to the mutator
                 'video' => $student->video,
             ];

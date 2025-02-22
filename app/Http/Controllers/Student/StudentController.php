@@ -33,7 +33,7 @@ class StudentController extends Controller
         $absentCount   = $attendanceRecords->where('is_present', false)->count();
 
         $deduction = $absentCount * 3.13;
-        $attendancePercentage = max(100 - $deduction, 0); 
+        $attendancePercentage = max($deduction, 0); 
 
         return [
             'course_name'           => $course->name,
@@ -47,7 +47,6 @@ class StudentController extends Controller
 
     return response()->json($coursesWithInstructor);
 }
-
 
     public function getNotificationsForLoggedInStudent()
     {
