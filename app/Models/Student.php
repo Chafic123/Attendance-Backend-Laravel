@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Passport\HasApiTokens;
+use Illuminate\Support\Facades\Storage;
 
 class Student extends Model
 {
@@ -29,6 +30,35 @@ class Student extends Model
             $student->student_id = $currentYear . str_pad($studentCount, 4, '0', STR_PAD_LEFT);
         });
     }
+
+    public function updateStudentDetails(array $data)
+    {
+        if (isset($data['phone'])) {
+            $this->phone = $data['phone'];
+        }
+    
+        if (isset($data['image']) && $data['image']) {
+            if ($this->image) {
+                Storage::delete('public/' . $this->image);
+            }
+            $this->image = $data['image']->store('students/images', 'public');
+        }
+    
+        if (isset($data['video']) && $data['video']) {
+            if ($this->video) {
+                Storage::delete('public/' . $this->video);
+            }
+            $this->video = $data['video']->store('students/videos', 'public');
+        }
+    
+        try {
+            $this->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to save details: ' . $e->getMessage()], 500);
+        }
+        
+    }
+    
 
     public function user()
     {

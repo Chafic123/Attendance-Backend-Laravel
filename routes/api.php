@@ -43,8 +43,7 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
         ->name('student.attendance.sessions');
     Route::get('/schedule-report', [StudentController::class, 'getScheduleReportForLoggedInStudent'])
         ->name('student.schedule.report');
-    // Route::get('/courses/{courseId}/attendance-report', [CourseSessionController::class, 'generateAttendanceReport'])
-    //     ->name('student.attendance.report');
+    Route::post('/profile', [StudentController::class, 'updateStudentProfile'])->name('student.profile.update');
     Route::get('/user', function (Request $request) {
         return $request->user();
     })->name('student.user');

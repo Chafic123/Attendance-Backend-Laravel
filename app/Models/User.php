@@ -40,6 +40,17 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    public function updateUser($data)
+    {
+        $this->first_name = $data['first_name'];
+        $this->last_name = $data['last_name'];
+        try {
+            $this->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to save details: ' . $e->getMessage()], 500);
+        }
+    }
+
     /**
      * Set the user's password.
      */
@@ -51,6 +62,7 @@ class User extends Authenticatable
     /**
      * Relationships
      */
+
     public function admin()
     {
         return $this->hasOne(Admin::class);
@@ -66,10 +78,4 @@ class User extends Authenticatable
         return $this->hasOne(Instructor::class);
     }
 
-    public function updateProfileAdmin(array $data)
-    {
-        $this->first_name = $data['first_name'];
-        $this->last_name = $data['last_name'];
-        $this->save();
-    }
 }
