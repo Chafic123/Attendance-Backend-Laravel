@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AddCourseController;
 use App\Http\Controllers\Student\StudentController;
+use App\Http\Controllers\Instructor\InstructorController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('auth.login');
@@ -25,13 +26,32 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
 
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
     Route::post('/courses', [AddCourseController::class, 'store'])->name('admin.course.add');
-    
+
     Route::get('/students/{studentId}/courses', [AdminController::class, 'getCoursesForStudent'])
         ->name('admin.student.courses');
 
     Route::get('/user', function (Request $request) {
         return $request->user();
     })->name('admin.user');
+});
+
+
+// Instructor Routes (Only Instructors Can Access)
+
+
+Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->group(function () {
+
+    Route::get('/courses', [InstructorController::class, 'getCoursesForLoggedInInstructor'])->name('instructor.courses');
+    Route::get('/courses/{courseId}/students', [InstructorController::class, 'getAllStudentsCourse']);
+    //send notification
+    Route::post('/courses/send-notification', [InstructorController::class, 'sendNotification'])
+        ->name('instructor.course.student.notification');
+    Route::post('/profile', [InstructorController::class, 'updateInstructorProfile'])->name('Instructor.profile.update');
+
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    })->name('instructor.user');
 });
 
 // Student Routes (Only Students Can Access)
@@ -41,6 +61,9 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
         ->name('student.notifications');
     Route::get('/courses/{courseId}/calendar', [CourseSessionController::class, 'getSessionsWithAttendance'])
         ->name('student.attendance.sessions');
+    // markNotificationAsRead
+    Route::put('/notifications/{notificationId}/read', [StudentController::class, 'markNotificationAsRead'])
+        ->name('student.notification.read');
     Route::get('/schedule-report', [StudentController::class, 'getScheduleReportForLoggedInStudent'])
         ->name('student.schedule.report');
     Route::post('/profile', [StudentController::class, 'updateStudentProfile'])->name('student.profile.update');

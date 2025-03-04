@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('message');
 
             $table->enum('type', ['Regular', 'Warning']);
+            $table->boolean('read_status');
 
             $table->foreign('instructor_id')
                 ->references('id')

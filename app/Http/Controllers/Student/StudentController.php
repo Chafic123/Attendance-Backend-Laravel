@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Response;
 use App\Models\Notification;
 use App\Models\Attendance;
 
@@ -38,7 +39,7 @@ class StudentController extends Controller
 
             return [
                 'course_name' => $course->name,
-                'course_code' => $course->code ?? 'N/A',
+                'course_code' => $course->Code ?? 'N/A',
                 'instructor_name' => optional($course->instructors->first())->user
                     ? $course->instructors->first()->user->first_name . ' ' . $course->instructors->first()->user->last_name
                     : 'No instructor assigned',
@@ -49,28 +50,55 @@ class StudentController extends Controller
         return response()->json($coursesWithInstructor);
     }
 
-    public function getNotificationsForLoggedInStudent()
+    public function getNotificationsForLoggedInStudent(Request $request)
     {
         $student = Auth::user()->student;
         if (!$student) {
             return response()->json(['error' => 'Student not logged in'], 401);
         }
 
-        $notifications = Notification::where('student_id', $student->id)
-            ->with('instructor.user')
-            ->get();
+        $query = Notification::where('student_id', $student->id)
+            ->with('instructor.user'); 
+
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $notifications = $query->orderBy('created_at', 'desc')->get();
 
         $notificationsData = $notifications->map(function ($notification) {
             return [
+                'id' => $notification->id, 
                 'message' => $notification->message,
                 'type' => $notification->type,
+                'read_status' => $notification->read_status, 
                 'instructor_name' => optional($notification->instructor)->user
                     ? $notification->instructor->user->first_name . ' ' . $notification->instructor->user->last_name
                     : 'No instructor assigned',
+                'created_at' => $notification->created_at->toDateTimeString(), 
             ];
         });
 
         return response()->json($notificationsData);
+    }
+
+    public function markNotificationAsRead($notificationId)
+    {
+        $student = Auth::user()->student;
+        if (!$student) {
+            return response()->json(['error' => 'Student not logged in'], 401);
+        }
+    
+        $notification = Notification::where('id', $notificationId)
+            ->where('student_id', $student->id)
+            ->first();
+        if (!$notification) {
+            return response()->json(['error' => 'Notification not found'], 404);
+        }
+    
+        $notification->update(['read_status' => true]);
+    
+        return response()->json(['message' => 'Notification marked as read', 'notification' => $notification]);
     }
 
     public function updateStudentProfile(Request $request)

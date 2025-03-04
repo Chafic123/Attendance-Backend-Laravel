@@ -10,7 +10,8 @@ class Notification extends Model
         'instructor_id',
         'student_id',
         'message',
-        'type'
+        'type',
+        'read_status', 
     ];
 
     public function instructor()
