@@ -58,7 +58,7 @@ class StudentController extends Controller
         }
 
         $query = Notification::where('student_id', $student->id)
-            ->with('instructor.user'); 
+            ->with(['instructor.user', 'course']);
 
         if ($request->has('type')) {
             $query->where('type', $request->type);
@@ -68,19 +68,27 @@ class StudentController extends Controller
 
         $notificationsData = $notifications->map(function ($notification) {
             return [
-                'id' => $notification->id, 
+                'id' => $notification->id,
                 'message' => $notification->message,
                 'type' => $notification->type,
-                'read_status' => $notification->read_status, 
+                'read_status' => $notification->read_status,
                 'instructor_name' => optional($notification->instructor)->user
                     ? $notification->instructor->user->first_name . ' ' . $notification->instructor->user->last_name
                     : 'No instructor assigned',
-                'created_at' => $notification->created_at->toDateTimeString(), 
+                'course' => optional($notification->course) ? [
+                    'name' => $notification->course->name,
+                    'code' => $notification->course->Code,
+                    'start_time' => $notification->course->start_time,
+                    'end_time' => $notification->course->end_time,
+                    'day_of_week' => $notification->course->day_of_week,
+                ] : null,
+                'created_at' => $notification->created_at->toDateTimeString(),
             ];
         });
 
         return response()->json($notificationsData);
     }
+
 
     public function markNotificationAsRead($notificationId)
     {
@@ -88,16 +96,16 @@ class StudentController extends Controller
         if (!$student) {
             return response()->json(['error' => 'Student not logged in'], 401);
         }
-    
+
         $notification = Notification::where('id', $notificationId)
             ->where('student_id', $student->id)
             ->first();
         if (!$notification) {
             return response()->json(['error' => 'Notification not found'], 404);
         }
-    
+
         $notification->update(['read_status' => true]);
-    
+
         return response()->json(['message' => 'Notification marked as read', 'notification' => $notification]);
     }
 

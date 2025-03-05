@@ -9,6 +9,7 @@ class Notification extends Model
     protected $fillable = [
         'instructor_id',
         'student_id',
+        'course_id',
         'message',
         'type',
         'read_status', 
@@ -22,5 +23,10 @@ class Notification extends Model
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
     }
 }

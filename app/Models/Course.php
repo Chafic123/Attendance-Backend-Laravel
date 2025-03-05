@@ -36,4 +36,8 @@ class Course extends Model
     {
         return $this->belongsToMany(Term::class, 'course_term');
     }
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 }

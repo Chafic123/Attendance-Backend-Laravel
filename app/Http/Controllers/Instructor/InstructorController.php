@@ -79,6 +79,7 @@ class InstructorController extends Controller
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
+            'course_id' => 'required|exists:courses,id',
             'message' => 'required|string',
             'type' => 'required|string|in:Regular,Warning',
         ]);
@@ -94,6 +95,7 @@ class InstructorController extends Controller
             'course_id' => $request->course_id,
             'message' => $request->message,
             'type' => $request->type,
+            'course_id' => $request->course_id,
             'read_status' => false,
         ]);
 
