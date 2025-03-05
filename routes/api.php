@@ -35,9 +35,7 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     })->name('admin.user');
 });
 
-
 // Instructor Routes (Only Instructors Can Access)
-
 
 Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->group(function () {
 
@@ -61,7 +59,6 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
         ->name('student.notifications');
     Route::get('/courses/{courseId}/calendar', [CourseSessionController::class, 'getSessionsWithAttendance'])
         ->name('student.attendance.sessions');
-    // markNotificationAsRead
     Route::put('/notifications/{notificationId}/read', [StudentController::class, 'markNotificationAsRead'])
         ->name('student.notification.read');
     Route::get('/schedule-report', [StudentController::class, 'getScheduleReportForLoggedInStudent'])
@@ -70,6 +67,7 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
     Route::get('/user', function (Request $request) {
         return $request->user();
     })->name('student.user');
+    Route::post('/upload-video', [StudentController::class, 'processVideo'])->name('student.video.upload');
 
     Route::get('/user', function (Request $request) {
         return $request->user();
