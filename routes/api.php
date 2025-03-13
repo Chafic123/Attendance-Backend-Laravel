@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AddCourseController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Instructor\InstructorController;
+use App\Http\Controllers\MachineLearningController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('auth.login');
@@ -67,7 +68,7 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
     Route::get('/user', function (Request $request) {
         return $request->user();
     })->name('student.user');
-    Route::post('/upload-video', [StudentController::class, 'processVideo'])->name('student.video.upload');
+    Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
 
     Route::get('/user', function (Request $request) {
         return $request->user();
