@@ -30,10 +30,12 @@ class NotificationSeeder extends Seeder
                 DB::table('notifications')->insert([
                     'instructor_id' => $instructor->id,
                     'student_id' => $student->id,
-                    'message' => 'This is a sample notification message.', 
-                    'type' => 'Regular', 
+                    'message' => 'This is a sample notification message.',
+                    'type' => 'Regular',
+                    'read_status' => false,
                     'created_at' => now(),
                     'updated_at' => now(),
+                    'course_id' => 1,
                 ]);
             }
         }

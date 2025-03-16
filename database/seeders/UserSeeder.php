@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
         // ]);
         // Admin::create(['user_id' => $admin->id]);
 
-        // // Create Instructor
+        // // // Create Instructor
         // $instructor = User::create([
         //     'first_name' => 'Roaa',
         //     'last_name' => 'Soloh',
@@ -40,21 +40,21 @@ class UserSeeder extends Seeder
         // ]);
 
         // // Create Student
-        $student = User::create([
-            'first_name' => 'Osama',
-            'last_name' => 'Aawad',
-            'email' => 'AawadOs@students.rhu.edu.lb',
-            'password' => "123456",
-            'status' => 'Student',
-        ]);
-        Student::create([
-            'user_id' => $student->id,
-            'phone_number' => '81657999',
-            'major' => 'Electrical Engineering',
-            'image' => 'default.png',
-            'video' => 'default.mp4',
-            'department_id' => 3,
-        ]);
+        // $student = User::create([
+        //     'first_name' => 'Osama',
+        //     'last_name' => 'Aawad',
+        //     'email' => 'AawadOs@students.rhu.edu.lb',
+        //     'password' => "123456",
+        //     'status' => 'Student',
+        // ]);
+        // Student::create([
+        //     'user_id' => $student->id,
+        //     'phone_number' => '81657999',
+        //     'major' => 'Electrical Engineering',
+        //     'image' => 'default.png',
+        //     'video' => 'default.mp4',
+        //     'department_id' => 3,
+        // ]);
 
         echo "Student created";
     }

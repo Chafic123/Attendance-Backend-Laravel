@@ -9,12 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('attendances', function (Blueprint $table) {
+    public function up()
+{
+    Schema::table('attendances', function (Blueprint $table) {
+        if (!Schema::hasColumn('attendances', 'attended_at')) {
             $table->timestamp('attended_at')->nullable();
-        });
-    }
+        }
+    });
+}
+
 
     /**
      * Reverse the migrations.
