@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AddCourseController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Instructor\InstructorController;
 use App\Http\Controllers\MachineLearningController;
+use App\Models\Student;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('auth.login');
@@ -58,19 +59,14 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
     Route::get('/courses', [StudentController::class, 'getCoursesForLoggedInStudent'])->name('student.courses');
     Route::get('/notifications', [StudentController::class, 'getNotificationsForLoggedInStudent'])
         ->name('student.notifications');
-    Route::get('/courses/{courseId}/calendar', [CourseSessionController::class, 'getSessionsWithAttendance'])
+    Route::get('/courses/{courseId}/{studentId}/calendar', [StudentController::class, 'getStudentCalendar'])
         ->name('student.attendance.sessions');
     Route::put('/notifications/{notificationId}/read', [StudentController::class, 'markNotificationAsRead'])
         ->name('student.notification.read');
     Route::get('/schedule-report', [StudentController::class, 'getScheduleReportForLoggedInStudent'])
         ->name('student.schedule.report');
     Route::post('/profile', [StudentController::class, 'updateStudentProfile'])->name('student.profile.update');
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->name('student.user');
+    Route::get('/user', [StudentController::class, 'getAuthenticatedStudent'])->name('student.user');
     Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
 
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->name('student.user');
 });

@@ -8,8 +8,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Response;
+use Carbon\Carbon;
 use App\Models\Notification;
 use App\Models\Attendance;
+use App\Models\Student;
+use App\Models\CourseSession;
 
 class StudentController extends Controller
 {
@@ -248,5 +251,49 @@ class StudentController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    public function getAuthenticatedStudent(Request $request)
+    {
+        $user = $request->user();
+
+        $student = Student::where('user_id', $user->id)->first();
+
+        return response()->json([
+            'user' => $user,
+            'student' => $student
+        ]);
+    }
+
+    //calender
+    public function getStudentCalendar($courseId, $studentId)
+    {
+        $today = Carbon::today();
+        $sessions = CourseSession::where('course_id', $courseId)
+            ->orderBy('date')
+            ->get();
+
+        $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+            ->where('student_id', $studentId)
+            ->get()
+            ->keyBy('course_session_id');
+
+        $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
+            $sessionDate = Carbon::parse($session->date);
+            $status = 'upcoming';
+
+            if ($sessionDate->lte($today)) {
+                $status = $attendances->has($session->id)
+                    ? ($attendances[$session->id]->is_present ? 'present' : 'absent')
+                    : 'absent';
+            }
+
+            return [
+                'date'   => $session->date,
+                'status' => $status,
+            ];
+        });
+
+        return response()->json($calendarData);
     }
 }
