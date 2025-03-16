@@ -27,11 +27,21 @@ class NotificationSeeder extends Seeder
         
         foreach ($instructors as $instructor) {
             foreach ($students as $student) {
+                // DB::table('notifications')->insert([
+                //     'instructor_id' => $instructor->id,
+                //     'student_id' => $student->id,
+                //     'message' => 'This is a sample notification message.',
+                //     'type' => 'Regular',
+                //     'read_status' => false,
+                //     'created_at' => now(),
+                //     'updated_at' => now(),
+                //     'course_id' => 1,
+                // ]);
                 DB::table('notifications')->insert([
                     'instructor_id' => $instructor->id,
                     'student_id' => $student->id,
-                    'message' => 'This is a sample notification message.',
-                    'type' => 'Regular',
+                    'message' => "Please don't miss your class today",
+                    'type' => 'Warning',
                     'read_status' => false,
                     'created_at' => now(),
                     'updated_at' => now(),
