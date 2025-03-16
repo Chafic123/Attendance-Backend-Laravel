@@ -227,8 +227,8 @@ class StudentController extends Controller
             'courses' => $scheduleReport->map(function ($course) {
                 return [
                     'course_name' => $course->name,
-                    'course_code' => $course->code ?? 'N/A',
-                    'room_name' => $course->room ?? 'N/A',
+                    'course_code' => $course->Code ?? 'N/A',
+                    'room_name' => $course->Room ?? 'N/A',
                     'day_of_week' => str_split($course->day_of_week),
                     'section_name' => $course->section ?? 'N/A',
                     'time_start' => $course->start_time,
