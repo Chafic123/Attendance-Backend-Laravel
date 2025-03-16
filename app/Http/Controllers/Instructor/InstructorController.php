@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Instructor;
 
 class InstructorController extends Controller
 {
@@ -173,6 +174,18 @@ class InstructorController extends Controller
         return response()->json([
             'message' => 'Profile updated successfully',
             'image' => $instructor->image ? asset('storage/' . $instructor->image) : null,
+        ]);
+    }
+
+    public function getAuthenticatedStudent(Request $request)
+    {
+        $user = $request->user();
+
+        $Instructor = Instructor::where('user_id', $user->id)->first();
+
+        return response()->json([
+            'user' => $user,
+            'Instructor' => $Instructor
         ]);
     }
 }

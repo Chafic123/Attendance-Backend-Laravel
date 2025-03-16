@@ -49,9 +49,8 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
     Route::post('/profile', [InstructorController::class, 'updateInstructorProfile'])->name('Instructor.profile.update');
 
 
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->name('instructor.user');
+    Route::get('/user', [InstructorController::class, 'getAuthenticatedStudent'])->name('Instructor.user');
+
 });
 
 // Student Routes (Only Students Can Access)
