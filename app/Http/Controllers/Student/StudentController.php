@@ -33,12 +33,11 @@ class StudentController extends Controller
                     $query->where('course_id', $course->id);
                 })->get();
 
-            $totalSessions = $attendanceRecords->count();
             $absentCount = $attendanceRecords->where('is_present', false)->count();
 
-            $attendancePercentage = $totalSessions > 0
-                ? round((1 - ($absentCount / $totalSessions)) * 100, 2)
-                : 100;
+            $absencePercentage = round($absentCount * 3.33, 2);
+
+            $status = $absencePercentage >= 25 ? 'At risk of drop' : 'Safe';
 
             return [
                 'course_name' => $course->name,
@@ -46,7 +45,8 @@ class StudentController extends Controller
                 'instructor_name' => optional($course->instructors->first())->user
                     ? $course->instructors->first()->user->first_name . ' ' . $course->instructors->first()->user->last_name
                     : 'No instructor assigned',
-                'attendance_percentage' => $attendancePercentage
+                'absence_percentage' => $absencePercentage . '%',
+                'status' => $status
             ];
         });
 
