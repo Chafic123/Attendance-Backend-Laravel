@@ -40,6 +40,7 @@ class StudentController extends Controller
             $status = $absencePercentage >= 25 ? 'At risk of drop' : 'Safe';
 
             return [
+                'course_id' => $course->id,
                 'course_name' => $course->name,
                 'course_code' => $course->Code ?? 'N/A',
                 'instructor_name' => optional($course->instructors->first())->user
