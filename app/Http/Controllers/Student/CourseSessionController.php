@@ -8,6 +8,7 @@ use App\Models\CourseSession;
 use App\Services\CourseSessionGenerator;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Response;
 
 class CourseSessionController extends Controller
 {

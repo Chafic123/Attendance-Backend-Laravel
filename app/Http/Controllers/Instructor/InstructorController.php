@@ -168,7 +168,7 @@ class InstructorController extends Controller
         try {
             $instructor->save();
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to save instructor details: ' . $e->getMessage()], 500);
+            return \response()->json(['error' => 'Failed to save instructor details: ' . $e->getMessage()], 500);
         }
 
         return response()->json([
