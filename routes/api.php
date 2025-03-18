@@ -2,14 +2,12 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CourseSessionController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AddCourseController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Instructor\InstructorController;
 use App\Http\Controllers\MachineLearningController;
-use App\Models\Student;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('auth.login');
@@ -27,7 +25,7 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
         ->name('admin.course.students');
     Route::get('/{courseId}/calender', [AdminController::class, 'getCourseCalendar']);
 
-    Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
+    Route::post('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
     Route::post('/Addcourse', [AddCourseController::class, 'store'])->name('admin.course.add');
 
     Route::get('/students/{studentId}/courses', [AdminController::class, 'getCoursesForStudent'])

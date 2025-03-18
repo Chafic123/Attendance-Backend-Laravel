@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Student;
 use App\Http\Controllers\Controller;
 use App\Models\CourseSession;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
 {
@@ -150,6 +152,47 @@ class AdminController extends Controller
 
         return response()->json([
             'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name,
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $admin = Auth::user()->admin;
+        $user = Auth::user();
+
+        if (!$admin) {
+            return response()->json(['error' => 'Admin not found'], 404);
+        }
+
+        $userValidator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+        ]);
+
+        if ($userValidator->fails()) {
+            return response()->json(['error' => $userValidator->errors()], 400);
+        }
+
+        if (!$user instanceof \App\Models\User) {
+            return response()->json(['error' => 'Invalid user type'], 404);
+        }
+
+        $user->first_name = $request->input('first_name');
+        $user->last_name = $request->input('last_name');
+
+        try {
+            $user->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
+        }
+
+        function sanitizeFileName($name)
+        {
+            $name = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
+            return substr($name, 0, 50);
+        }
+        return response()->json([
+            'message' => 'Profile updated successfully',
         ]);
     }
 }

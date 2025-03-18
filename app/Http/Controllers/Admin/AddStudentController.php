@@ -21,7 +21,7 @@ class AddStudentController extends Controller
             [
                 'first_name' => 'required|string',
                 'last_name' => 'required|string|unique:courses,code',
-
+                
             ]
             );
         
