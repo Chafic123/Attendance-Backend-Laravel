@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string("Code")->default("COSC");
+            $table->integer('credits');
             $table->integer('Section');
             $table->string('Room');
             $table->string('day_of_week');

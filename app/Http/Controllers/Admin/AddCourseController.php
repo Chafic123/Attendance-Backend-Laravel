@@ -16,6 +16,7 @@ class AddCourseController extends Controller
             'name' => 'required|string',
             'Code' => 'required|string|unique:courses,Code,NULL,id,Section,' . $request->input('Section'),
             'Room' => 'required|string',
+            'credit' => 'required|integer',
             'Section' => 'required|string',
             'day_of_week' => 'required|string',
             'start_time' => 'required|string',

@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\User;
 use App\Models\Student;
 use App\Http\Controllers\Controller;
+use App\Models\CourseSession;
 
 class AdminController extends Controller
 {
@@ -40,6 +41,19 @@ class AdminController extends Controller
             ->paginate(12);
 
         return response()->json($instructors);
+    }
+    public function getCourseCalendar($courseId)
+    {
+        $course = Course::find($courseId);
+        $sessions = CourseSession::where('course_id', $courseId)
+            ->orderBy('date')
+            ->get();
+            // dd($sessions);
+        if (!$course) {
+            return response()->json(['message' => 'Course not found'], 404);
+        }
+
+        return response()->json($sessions);
     }
 
     /**

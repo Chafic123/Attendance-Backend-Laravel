@@ -25,9 +25,10 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::get('/courses', [AdminController::class, 'getAllCourses'])->name('admin.courses');
     Route::get('/courses/{courseId}/students', [AdminController::class, 'getAllAdminStudentsCourse'])
         ->name('admin.course.students');
+    Route::get('/{courseId}/calender', [AdminController::class, 'getCourseCalendar']);
 
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
-    Route::post('/courses', [AddCourseController::class, 'store'])->name('admin.course.add');
+    Route::post('/Addcourse', [AddCourseController::class, 'store'])->name('admin.course.add');
 
     Route::get('/students/{studentId}/courses', [AdminController::class, 'getCoursesForStudent'])
         ->name('admin.student.courses');
