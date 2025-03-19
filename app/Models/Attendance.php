@@ -8,7 +8,7 @@ class Attendance extends Model
 {
     protected $fillable = [
         'student_id',
-        'session_id',
+        'course_session_id',
         'is_present',
         'attended_at'
     ];
