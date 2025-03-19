@@ -93,7 +93,6 @@ class StudentController extends Controller
         return response()->json($notificationsData);
     }
 
-
     public function markNotificationAsRead($notificationId)
     {
         $student = Auth::user()->student;
@@ -113,95 +112,165 @@ class StudentController extends Controller
         return response()->json(['message' => 'Notification marked as read', 'notification' => $notification]);
     }
 
+    // public function updateStudentProfile(Request $request)
+    // {
+    //     $student = Auth::user()->student;
+    //     $user = Auth::user();
+
+    //     if (!$student) {
+    //         return response()->json(['error' => 'Student not found'], 404);
+    //     }
+
+    //     $userValidator = Validator::make($request->all(), [
+    //         'first_name' => 'required|string|max:255',
+    //         'last_name' => 'required|string|max:255',
+    //     ]);
+
+    //     if ($userValidator->fails()) {
+    //         return response()->json(['error' => $userValidator->errors()], 400);
+    //     }
+
+    //     if (!$user instanceof \App\Models\User) {
+    //         return response()->json(['error' => 'Invalid user type'], 404);
+    //     }
+
+    //     $user->first_name = $request->input('first_name');
+    //     $user->last_name = $request->input('last_name');
+
+    //     try {
+    //         $user->save();
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
+    //     }
+
+    //     $studentValidator = Validator::make($request->all(), [
+    //         'phone_number' => 'nullable|numeric',
+    //         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //         'video' => 'nullable|mimes:mp4,avi,mov|max:10240',
+    //     ]);
+
+    //     if ($studentValidator->fails()) {
+    //         return response()->json(['error' => $studentValidator->errors()], 400);
+    //     }
+
+    //     function sanitizeFileName($name)
+    //     {
+    //         $name = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
+    //         return substr($name, 0, 50);
+    //     }
+
+    //     if ($request->hasFile('image')) {
+    //         if ($student->image && Storage::disk('public')->exists($student->image)) {
+    //             Storage::disk('public')->delete($student->image);
+    //         }
+
+    //         $firstName = sanitizeFileName($user->first_name);
+    //         $lastName = sanitizeFileName($user->last_name);
+
+    //         $imageName = 'profile_image_' . $firstName . '_' . $lastName . '_' . $student->student_id . '_' . time() . '.' . $request->file('image')->getClientOriginalExtension();
+
+    //         $imagePath = $request->file('image')->storeAs('profile_images', $imageName, 'public');
+    //         $student->image = $imagePath;
+    //     }
+
+    //     if ($request->hasFile('video')) {
+    //         if ($student->video && Storage::disk('public')->exists($student->video)) {
+    //             Storage::disk('public')->delete($student->video);
+    //         }
+
+    //         $firstName = sanitizeFileName($user->first_name);
+    //         $lastName = sanitizeFileName($user->last_name);
+
+    //         $videoName = 'profile_video_' . $firstName . '_' . $lastName . '_' . $student->student_id . '_' . time() . '.' . $request->file('video')->getClientOriginalExtension();
+
+    //         $videoPath = $request->file('video')->storeAs('profile_videos', $videoName, 'public');
+    //         $student->video = $videoPath;
+    //     }
+
+    //     $student->phone_number = $request->input('phone_number');
+
+    //     try {
+    //         $student->save();
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Failed to save student details: ' . $e->getMessage()], 500);
+    //     }
+
+    //     return response()->json([
+    //         'message' => 'Profile updated successfully',
+    //     ]);
+    // }
     public function updateStudentProfile(Request $request)
-    {
-        $student = Auth::user()->student;
-        $user = Auth::user();
+{
+    $student = Auth::user()->student;
+    $user = Auth::user();
 
-        if (!$student) {
-            return response()->json(['error' => 'Student not found'], 404);
-        }
-
-        $userValidator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-        ]);
-
-        if ($userValidator->fails()) {
-            return response()->json(['error' => $userValidator->errors()], 400);
-        }
-
-        if (!$user instanceof \App\Models\User) {
-            return response()->json(['error' => 'Invalid user type'], 404);
-        }
-
-        $user->first_name = $request->input('first_name');
-        $user->last_name = $request->input('last_name');
-
-        try {
-            $user->save();
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
-        }
-
-        $studentValidator = Validator::make($request->all(), [
-            'phone_number' => 'nullable|numeric',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'video' => 'nullable|mimes:mp4,avi,mov|max:10240',
-        ]);
-
-        if ($studentValidator->fails()) {
-            return response()->json(['error' => $studentValidator->errors()], 400);
-        }
-
-        function sanitizeFileName($name)
-        {
-            $name = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
-            return substr($name, 0, 50);
-        }
-
-        if ($request->hasFile('image')) {
-            if ($student->image && Storage::disk('public')->exists($student->image)) {
-                Storage::disk('public')->delete($student->image);
-            }
-
-            $firstName = sanitizeFileName($user->first_name);
-            $lastName = sanitizeFileName($user->last_name);
-
-            $imageName = 'profile_image_' . $firstName . '_' . $lastName . '_' . $student->student_id . '_' . time() . '.' . $request->file('image')->getClientOriginalExtension();
-
-            $imagePath = $request->file('image')->storeAs('profile_images', $imageName, 'public');
-            $student->image = $imagePath;
-        }
-
-        if ($request->hasFile('video')) {
-            if ($student->video && Storage::disk('public')->exists($student->video)) {
-                Storage::disk('public')->delete($student->video);
-            }
-
-            $firstName = sanitizeFileName($user->first_name);
-            $lastName = sanitizeFileName($user->last_name);
-
-            $videoName = 'profile_video_' . $firstName . '_' . $lastName . '_' . $student->student_id . '_' . time() . '.' . $request->file('video')->getClientOriginalExtension();
-
-            $videoPath = $request->file('video')->storeAs('profile_videos', $videoName, 'public');
-            $student->video = $videoPath;
-        }
-
-        $student->phone_number = $request->input('phone_number');
-
-        try {
-            $student->save();
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to save student details: ' . $e->getMessage()], 500);
-        }
-
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'image' => $student->image ? asset('storage/' . $student->image) : null,
-            'video' => $student->video ? asset('storage/' . $student->video) : null,
-        ]);
+    if (!$student) {
+        return response()->json(['error' => 'Student not found'], 404);
     }
+
+    // Validate user details
+    $userValidator = Validator::make($request->all(), [
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+    ]);
+
+    if ($userValidator->fails()) {
+        return response()->json(['error' => $userValidator->errors()], 400);
+    }
+
+    // Update user details
+    $user->first_name = $request->input('first_name');
+    $user->last_name = $request->input('last_name');
+
+    try {
+        if ($user instanceof \App\Models\User) {
+            $user->save();
+        } else {
+            return response()->json(['error' => 'Invalid user type'], 500);
+        }
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
+    }
+
+    // Validate student details
+    $studentValidator = Validator::make($request->all(), [
+        'phone_number' => 'nullable|numeric',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'video' => 'nullable|mimes:mp4,avi,mov|max:10240',
+    ]);
+
+    if ($studentValidator->fails()) {
+        return response()->json(['error' => $studentValidator->errors()], 400);
+    }
+
+    // Convert image and video to Base64 and save in the database
+    if ($request->hasFile('image')) {
+        $imageFile = $request->file('image');
+        $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
+        $student->image = $imageData; // Save Base64-encoded image in database
+    }
+
+    if ($request->hasFile('video')) {
+        $videoFile = $request->file('video');
+        $videoData = base64_encode(file_get_contents($videoFile->getRealPath()));
+        $student->video = $videoData; // Save Base64-encoded video in database
+    }
+
+    // Save phone number
+    $student->phone_number = $request->input('phone_number');
+
+    try {
+        $student->save();
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to save student details: ' . $e->getMessage()], 500);
+    }
+
+    return response()->json([
+        'message' => 'Profile updated successfully',
+        'image' => $student->image ? 'data:image/jpeg;base64,' . $student->image : null,
+        'video' => $student->video ? 'data:video/mp4;base64,' . $student->video : null,
+    ]);
+}
 
 
     public function getScheduleReportForLoggedInStudent()

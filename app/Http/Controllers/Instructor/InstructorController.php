@@ -11,6 +11,7 @@ use App\Models\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Instructor;
+use App\Events\StudentNotification;
 
 class InstructorController extends Controller
 {
@@ -96,9 +97,16 @@ class InstructorController extends Controller
             'course_id' => $request->course_id,
             'message' => $request->message,
             'type' => $request->type,
-            'course_id' => $request->course_id,
             'read_status' => false,
         ]);
+        broadcast(new StudentNotification(
+            $request->student_id,
+            $request->message,
+            $request->course_id,
+            $instructor->id
+        ));
+
+
 
         return response()->json(['message' => 'Notification sent successfully', 'notification' => $notification]);
     }
@@ -113,6 +121,7 @@ class InstructorController extends Controller
             return response()->json(['error' => 'Instructor not found'], 404);
         }
 
+        // Validate user details
         $userValidator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -135,6 +144,7 @@ class InstructorController extends Controller
             return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
         }
 
+        // Validate instructor details
         $instructorValidator = Validator::make($request->all(), [
             'phone_number' => 'nullable|numeric',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -144,23 +154,12 @@ class InstructorController extends Controller
             return response()->json(['error' => $instructorValidator->errors()], 400);
         }
 
-        function sanitizeFileName($name)
-        {
-            $name = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
-            return substr($name, 0, 50);
-        }
-
+        // Convert image to Base64 and store in DB
         if ($request->hasFile('image')) {
-            if ($instructor->image && Storage::disk('public')->exists($instructor->image)) {
-                Storage::disk('public')->delete($instructor->image);
-            }
+            $imageFile = $request->file('image');
+            $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
 
-            $firstName = sanitizeFileName($user->first_name);
-            $lastName = sanitizeFileName($user->last_name);
-            $imageName = 'profile_image_' . $firstName . '_' . $lastName . '_' . $instructor->id . '_' . time() . '.' . $request->file('image')->getClientOriginalExtension();
-
-            $imagePath = $request->file('image')->storeAs('profile_images', $imageName, 'public');
-            $instructor->image = $imagePath;
+            $instructor->image = $imageData; // Store Base64 image in database
         }
 
         $instructor->phone_number = $request->input('phone_number');
@@ -168,14 +167,15 @@ class InstructorController extends Controller
         try {
             $instructor->save();
         } catch (\Exception $e) {
-            return \response()->json(['error' => 'Failed to save instructor details: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to save instructor details: ' . $e->getMessage()], 500);
         }
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'image' => $instructor->image ? asset('storage/' . $instructor->image) : null,
+            'image' => $instructor->image ? 'data:image/jpeg;base64,' . $instructor->image : null,
         ]);
     }
+
 
     public function getAuthenticatedStudent(Request $request)
     {
