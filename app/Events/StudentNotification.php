@@ -1,13 +1,14 @@
 <?php
+
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class StudentNotification implements ShouldBroadcast
+class StudentNotification implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -29,8 +30,8 @@ class StudentNotification implements ShouldBroadcast
         return new Channel('student.' . $this->studentId);
     }
 
-    public function broadcastAs()
+    public function broadcastWith()
     {
-        return 'student-notification';
+        return ['student-notification ' . $this->message];
     }
 }
