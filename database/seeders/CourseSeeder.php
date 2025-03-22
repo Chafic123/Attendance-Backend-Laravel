@@ -17,6 +17,7 @@ class CourseSeeder extends Seeder
             'day_of_week' => 'MW',
             'start_time' => '08:00:00',
             'end_time' => '10:00:00',
+            'credits' => 3,
         ]);
         Course::create([
             'name' => 'Introduction to Programming',
@@ -26,6 +27,7 @@ class CourseSeeder extends Seeder
             'day_of_week' => 'MW',
             'start_time' => '02:00:00',
             'end_time' => '4:00:00',
+            'credits' => 3,
         ]);
         Course::create([
             'name' => 'Web Development',
@@ -35,6 +37,7 @@ class CourseSeeder extends Seeder
             'day_of_week' => 'TR',
             'start_time' => '08:00:00',
             'end_time' => '10:00:00',
+            'credits' => 3,
         ]);
 
         Course::create([
@@ -45,6 +48,7 @@ class CourseSeeder extends Seeder
             'day_of_week' => 'TR',
             'start_time' => '09:00:00',
             'end_time' => '11:00:00',
+            'credits' => 3,
         ]);
     }
 }
