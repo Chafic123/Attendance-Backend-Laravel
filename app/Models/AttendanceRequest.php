@@ -10,8 +10,10 @@ class AttendanceRequest extends Model
     protected $fillable = [
         'student_id',
         'attendance_id',
+        'course_id',
         'reason',
-        'request_date'
+        'request_date',
+        'status'
     ];
 
     public function student()
@@ -23,4 +25,9 @@ class AttendanceRequest extends Model
     {
         return $this->belongsTo(Attendance::class);
     }
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
+    
 }

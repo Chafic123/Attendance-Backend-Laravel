@@ -18,6 +18,7 @@ class Course extends Model
         'start_time',
         'end_time',
     ];
+
     public function course_sessions()
     {
         return $this->hasMany(CourseSession::class);
@@ -37,8 +38,14 @@ class Course extends Model
     {
         return $this->belongsToMany(Term::class, 'course_term');
     }
+
     public function notifications()
     {
         return $this->hasMany(Notification::class);
+    }
+
+    public function attendanceRequests()
+    {
+        return $this->hasMany(AttendanceRequest::class);
     }
 }

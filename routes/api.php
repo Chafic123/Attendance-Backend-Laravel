@@ -66,5 +66,5 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
     Route::post('/profile', [StudentController::class, 'updateStudentProfile'])->name('student.profile.update');
     Route::get('/user', [StudentController::class, 'getAuthenticatedStudent'])->name('student.user');
     Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
-    Route::post('/attendance-requests/{courseId}/{studentId}/{attendanceId}', [StudentController::class, 'requestCorrection'])->name('student.attendance.request');
+    Route::post('/attendance-requests/{attendanceId}', [StudentController::class, 'requestCorrection'])->name('student.attendance.request');
 });

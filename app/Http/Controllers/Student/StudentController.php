@@ -14,6 +14,7 @@ use App\Models\Attendance;
 use App\Models\Student;
 use App\Models\CourseSession;
 use App\Models\AttendanceRequest;
+use App\Models\Course;
 
 class StudentController extends Controller
 {
@@ -201,77 +202,77 @@ class StudentController extends Controller
     //     ]);
     // }
     public function updateStudentProfile(Request $request)
-{
-    $student = Auth::user()->student;
-    $user = Auth::user();
+    {
+        $student = Auth::user()->student;
+        $user = Auth::user();
 
-    if (!$student) {
-        return response()->json(['error' => 'Student not found'], 404);
-    }
-
-    // Validate user details
-    $userValidator = Validator::make($request->all(), [
-        'first_name' => 'required|string|max:255',
-        'last_name' => 'required|string|max:255',
-    ]);
-
-    if ($userValidator->fails()) {
-        return response()->json(['error' => $userValidator->errors()], 400);
-    }
-
-    // Update user details
-    $user->first_name = $request->input('first_name');
-    $user->last_name = $request->input('last_name');
-
-    try {
-        if ($user instanceof \App\Models\User) {
-            $user->save();
-        } else {
-            return response()->json(['error' => 'Invalid user type'], 500);
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
         }
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
+
+        // Validate user details
+        $userValidator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+        ]);
+
+        if ($userValidator->fails()) {
+            return response()->json(['error' => $userValidator->errors()], 400);
+        }
+
+        // Update user details
+        $user->first_name = $request->input('first_name');
+        $user->last_name = $request->input('last_name');
+
+        try {
+            if ($user instanceof \App\Models\User) {
+                $user->save();
+            } else {
+                return response()->json(['error' => 'Invalid user type'], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
+        }
+
+        // Validate student details
+        $studentValidator = Validator::make($request->all(), [
+            'phone_number' => 'nullable|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'video' => 'nullable|mimes:mp4,avi,mov|max:10240',
+        ]);
+
+        if ($studentValidator->fails()) {
+            return response()->json(['error' => $studentValidator->errors()], 400);
+        }
+
+        // Convert image and video to Base64 and save in the database
+        if ($request->hasFile('image')) {
+            $imageFile = $request->file('image');
+            $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
+            $student->image = $imageData; // Save Base64-encoded image in database
+        }
+
+        if ($request->hasFile('video')) {
+            $videoFile = $request->file('video');
+            $videoData = base64_encode(file_get_contents($videoFile->getRealPath()));
+            $student->video = $videoData; // Save Base64-encoded video in database
+        }
+
+        // Save phone number
+        $student->phone_number = $request->input('phone_number');
+
+        try {
+            $student->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to save student details: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'image' => $student->image ? 'data:image/jpeg;base64,' . $student->image : null,
+            'video' => $student->video ? 'data:video/mp4;base64,' . $student->video : null,
+        ]);
     }
-
-    // Validate student details
-    $studentValidator = Validator::make($request->all(), [
-        'phone_number' => 'nullable|numeric',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'video' => 'nullable|mimes:mp4,avi,mov|max:10240',
-    ]);
-
-    if ($studentValidator->fails()) {
-        return response()->json(['error' => $studentValidator->errors()], 400);
-    }
-
-    // Convert image and video to Base64 and save in the database
-    if ($request->hasFile('image')) {
-        $imageFile = $request->file('image');
-        $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
-        $student->image = $imageData; // Save Base64-encoded image in database
-    }
-
-    if ($request->hasFile('video')) {
-        $videoFile = $request->file('video');
-        $videoData = base64_encode(file_get_contents($videoFile->getRealPath()));
-        $student->video = $videoData; // Save Base64-encoded video in database
-    }
-
-    // Save phone number
-    $student->phone_number = $request->input('phone_number');
-
-    try {
-        $student->save();
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Failed to save student details: ' . $e->getMessage()], 500);
-    }
-
-    return response()->json([
-        'message' => 'Profile updated successfully',
-        'image' => $student->image ? 'data:image/jpeg;base64,' . $student->image : null,
-        'video' => $student->video ? 'data:video/mp4;base64,' . $student->video : null,
-    ]);
-}
 
 
     public function getScheduleReportForLoggedInStudent()
@@ -337,6 +338,41 @@ class StudentController extends Controller
     }
 
     //calender
+
+
+    //original
+    // public function getStudentCalendar($courseId, $studentId)
+    // {
+    //     $today = Carbon::today();
+    //     $sessions = CourseSession::where('course_id', $courseId)
+    //         ->orderBy('date')
+    //         ->get();
+
+    //     $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+    //         ->where('student_id', $studentId)
+    //         ->get()
+    //         ->keyBy('course_session_id');
+
+    //     $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
+    //         $sessionDate = Carbon::parse($session->date);
+    //         $status = 'upcoming';
+
+    //         if ($sessionDate->lte($today)) {
+    //             $status = $attendances->has($session->id)
+    //                 ? ($attendances[$session->id]->is_present ? 'present' : 'absent')
+    //                 : 'absent';
+    //         }
+
+    //         return [
+    //             'date'   => $session->date,
+    //             'status' => $status,
+    //         ];
+    //     });
+
+    //     return response()->json($calendarData);
+    // }
+
+    //tester
     public function getStudentCalendar($courseId, $studentId)
     {
         $today = Carbon::today();
@@ -352,14 +388,19 @@ class StudentController extends Controller
         $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
             $sessionDate = Carbon::parse($session->date);
             $status = 'upcoming';
+            $attendanceId = null; // Default value if attendance is not found
 
             if ($sessionDate->lte($today)) {
-                $status = $attendances->has($session->id)
-                    ? ($attendances[$session->id]->is_present ? 'present' : 'absent')
-                    : 'absent';
+                if ($attendances->has($session->id)) {
+                    $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
+                    $attendanceId = $attendances[$session->id]->id;
+                } else {
+                    $status = 'absent'; 
+                }
             }
 
             return [
+                'id'     => $attendanceId,
                 'date'   => $session->date,
                 'status' => $status,
             ];
@@ -370,44 +411,47 @@ class StudentController extends Controller
 
 
     //request correction 
-    //the student should click on the day he wants to edit the attendance and the route should have the course_id in which course he is , the authenticated student and the attendance_id 
+
     public function requestCorrection(Request $request, $attendanceId)
     {
         $student = Auth::user()->student;
-    
+
         if (!$student) {
             return response()->json(['error' => 'Unauthorized request'], 403);
         }
-    
-        // Fetch the attendance record and its associated course session
+
         $attendance = Attendance::where('id', $attendanceId)
             ->where('student_id', $student->id)
             ->first();
-    
+
         if (!$attendance) {
             return response()->json(['error' => 'Attendance record not found'], 404);
         }
-    
-        // Get the course session and course ID
-        $courseSession = CourseSession::where('id', $attendance->course_session_id)->first();
+
+        $courseSession = CourseSession::find($attendance->course_session_id);
         if (!$courseSession) {
             return response()->json(['error' => 'Course session not found'], 404);
         }
-    
-        $courseId = $courseSession->course_id;
-    
+
+        $course = Course::find($courseSession->course_id);
+        if (!$course) {
+            return response()->json(['error' => 'Course not found'], 404);
+        }
+
+        $instructor = $course->instructors()->first();
+        if (!$instructor) {
+            return response()->json(['error' => 'Instructor not found'], 404);
+        }
         AttendanceRequest::create([
             'student_id' => $student->id,
             'attendance_id' => $attendance->id,
-            'course_id' => $courseId,
+            'course_id' => $courseSession->course_id,
+            'instructor_id' => $instructor->id,
             'reason' => $request->input('reason'),
             'request_date' => now(),
+            'status' => 'pending',
         ]);
-    
+
         return response()->json(['message' => 'Correction request submitted successfully']);
     }
-
-
-    
-    
 }
