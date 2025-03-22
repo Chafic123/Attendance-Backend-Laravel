@@ -13,6 +13,7 @@ use App\Models\Notification;
 use App\Models\Attendance;
 use App\Models\Student;
 use App\Models\CourseSession;
+use App\Models\AttendanceRequest;
 
 class StudentController extends Controller
 {
@@ -366,4 +367,47 @@ class StudentController extends Controller
 
         return response()->json($calendarData);
     }
+
+
+    //request correction 
+    //the student should click on the day he wants to edit the attendance and the route should have the course_id in which course he is , the authenticated student and the attendance_id 
+    public function requestCorrection(Request $request, $attendanceId)
+    {
+        $student = Auth::user()->student;
+    
+        if (!$student) {
+            return response()->json(['error' => 'Unauthorized request'], 403);
+        }
+    
+        // Fetch the attendance record and its associated course session
+        $attendance = Attendance::where('id', $attendanceId)
+            ->where('student_id', $student->id)
+            ->first();
+    
+        if (!$attendance) {
+            return response()->json(['error' => 'Attendance record not found'], 404);
+        }
+    
+        // Get the course session and course ID
+        $courseSession = CourseSession::where('id', $attendance->course_session_id)->first();
+        if (!$courseSession) {
+            return response()->json(['error' => 'Course session not found'], 404);
+        }
+    
+        $courseId = $courseSession->course_id;
+    
+        AttendanceRequest::create([
+            'student_id' => $student->id,
+            'attendance_id' => $attendance->id,
+            'course_id' => $courseId,
+            'reason' => $request->input('reason'),
+            'request_date' => now(),
+        ]);
+    
+        return response()->json(['message' => 'Correction request submitted successfully']);
+    }
+
+
+    
+    
 }

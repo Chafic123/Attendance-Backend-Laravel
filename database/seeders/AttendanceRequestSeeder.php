@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\Student;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AttendanceRequestSeeder extends Seeder
 {
@@ -14,28 +15,28 @@ class AttendanceRequestSeeder extends Seeder
      */
     public function run(): void
     {
-        
-        $students = Student::all(); 
-        $attendances = Attendance::all(); 
-
-        if ($students->isEmpty() || $attendances->isEmpty()) {
-            echo "Please add students and attendance records to the database first.";
-            return;
-        }
-
-        foreach ($students as $student) {
-            foreach ($attendances as $attendance) {
-                DB::table('attendance_requests')->insert([
-                    'student_id' => $student->id,
-                    'attendance_id' => $attendance->id,
-                    'reason' => 'This is a sample reason for the attendance request.', 
-                    'request_date' => now()->toDateString(), 
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
-
-        echo "Attendance requests have been seeded!";
+        DB::table('attendance_requests')->insert([
+            [
+                'student_id' => 4, 
+                'attendance_id' => 3, 
+                'course_id' => 1, 
+                'reason' => 'Missed class due to illness',
+                'request_date' => Carbon::now(),
+                'status' => 'pending',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'student_id' => 2,
+                'attendance_id' => 4,
+                'course_id' => 1,
+                'reason' => 'Attended but marked absent',
+                'request_date' => Carbon::now(),
+                'status' => 'pending',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            
+        ]);
     }
 }

@@ -46,8 +46,8 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
     Route::post('/courses/send-notification', [InstructorController::class, 'sendNotification'])
         ->name('instructor.course.student.notification');
     Route::post('/profile', [InstructorController::class, 'updateInstructorProfile'])->name('Instructor.profile.update');
-
-
+    Route::get('/schedule-report', [InstructorController::class, 'getScheduleReportForLoggedInInstructor'])
+        ->name('Instructor.schedule.report');
     Route::get('/user', [InstructorController::class, 'getAuthenticatedStudent'])->name('Instructor.user');
 
 });
@@ -66,5 +66,5 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
     Route::post('/profile', [StudentController::class, 'updateStudentProfile'])->name('student.profile.update');
     Route::get('/user', [StudentController::class, 'getAuthenticatedStudent'])->name('student.user');
     Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
-
+    Route::post('/attendance-requests/{courseId}/{studentId}/{attendanceId}', [StudentController::class, 'requestCorrection'])->name('student.attendance.request');
 });
