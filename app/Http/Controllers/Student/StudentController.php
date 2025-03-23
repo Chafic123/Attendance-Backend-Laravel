@@ -375,7 +375,8 @@ class StudentController extends Controller
     //tester
     public function getStudentCalendar($courseId, $studentId)
     {
-        $today = Carbon::today();
+        $today = Carbon::today()->startOfDay();
+
         $sessions = CourseSession::where('course_id', $courseId)
             ->orderBy('date')
             ->get();
@@ -386,16 +387,16 @@ class StudentController extends Controller
             ->keyBy('course_session_id');
 
         $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
-            $sessionDate = Carbon::parse($session->date);
+            $sessionDate = Carbon::parse($session->date)->startOfDay();
             $status = 'upcoming';
-            $attendanceId = null; // Default value if attendance is not found
+            $attendanceId = null;
 
             if ($sessionDate->lte($today)) {
                 if ($attendances->has($session->id)) {
                     $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
                     $attendanceId = $attendances[$session->id]->id;
                 } else {
-                    $status = 'absent'; 
+                    $status = 'absent';
                 }
             }
 
