@@ -66,6 +66,7 @@ class InstructorController extends Controller
 
             $studentsWithAttendance[] = [
                 'student_id' => $student->id,
+                'Uni_id' => $student->student_id,
                 'first_name' => optional($student->user)->first_name,
                 'last_name' => optional($student->user)->last_name,
                 'major' => $student->major,
