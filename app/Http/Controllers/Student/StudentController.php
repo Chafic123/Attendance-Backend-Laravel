@@ -296,7 +296,7 @@ class StudentController extends Controller
                 'last_name' => $student->user->last_name,
                 'department' => $student->department->name ?? null,
                 'email' => $student->user->email,
-                'phone' => $student->phone,
+                'phone' => $student->phone_number,
                 'major' => $student->major,
             ],
             'courses' => $scheduleReport->map(function ($course) {
@@ -305,7 +305,7 @@ class StudentController extends Controller
                     'course_code' => $course->Code ?? 'N/A',
                     'room_name' => $course->Room ?? 'N/A',
                     'day_of_week' => str_split($course->day_of_week),
-                    'section_name' => $course->section ?? 'N/A',
+                    'section_name' => $course->Section ?? 'N/A',
                     'time_start' => $course->start_time,
                     'time_end' => $course->end_time,
                     'term' => optional($course->terms->first())->name,

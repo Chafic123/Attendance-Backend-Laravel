@@ -11,9 +11,12 @@ use App\Http\Controllers\MachineLearningController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('auth.login');
+    Route::get('/course-sessions', [MachineLearningController::class, 'index'])->name('student.course_sessions.index');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
         ->middleware('auth:sanctum')
         ->name('auth.logout');
+    Route::post('/register', [AuthenticatedSessionController::class, 'register'])->name('auth.register');
+    
 });
 
 // Admin Routes (Only Admins Can Access)
@@ -65,6 +68,6 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
         ->name('student.schedule.report');
     Route::post('/profile', [StudentController::class, 'updateStudentProfile'])->name('student.profile.update');
     Route::get('/user', [StudentController::class, 'getAuthenticatedStudent'])->name('student.user');
-    Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
+    // Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
     Route::post('/attendance-requests/{attendanceId}', [StudentController::class, 'requestCorrection'])->name('student.attendance.request');
 });

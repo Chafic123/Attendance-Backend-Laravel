@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Student;
 use App\Models\Session;
+use Carbon\Carbon;
 
 class Course extends Model
 {
@@ -18,6 +19,16 @@ class Course extends Model
         'start_time',
         'end_time',
     ];
+
+    public function getStartTimeAttribute($value)
+    {
+        return Carbon::parse($value)->format('H:i');
+    }
+
+    public function getEndTimeAttribute($value)
+    {
+        return Carbon::parse($value)->format('H:i');
+    }
 
     public function course_sessions()
     {

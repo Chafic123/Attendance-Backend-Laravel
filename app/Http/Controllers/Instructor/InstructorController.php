@@ -108,11 +108,8 @@ class InstructorController extends Controller
             $instructor->id
         ));
 
-
-
         return response()->json(['message' => 'Notification sent successfully', 'notification' => $notification]);
     }
-
 
     public function updateInstructorProfile(Request $request)
     {
@@ -146,7 +143,6 @@ class InstructorController extends Controller
             return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
         }
 
-        // Validate instructor details
         $instructorValidator = Validator::make($request->all(), [
             'phone_number' => 'nullable|numeric',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -156,12 +152,11 @@ class InstructorController extends Controller
             return response()->json(['error' => $instructorValidator->errors()], 400);
         }
 
-        // Convert image to Base64 and store in DB
         if ($request->hasFile('image')) {
             $imageFile = $request->file('image');
             $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
 
-            $instructor->image = $imageData; // Store Base64 image in database
+            $instructor->image = $imageData; 
         }
 
         $instructor->phone_number = $request->input('phone_number');
