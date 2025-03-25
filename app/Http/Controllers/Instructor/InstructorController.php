@@ -23,7 +23,7 @@ class InstructorController extends Controller
         }
 
         $courses = $user->instructor->courses()
-            ->select('courses.id as course_id', 'courses.name', 'courses.Code')
+            ->select('courses.id as course_id', 'courses.name', 'courses.Code', 'courses.Section')
             ->get();
 
         if ($courses->isEmpty()) {
@@ -35,6 +35,7 @@ class InstructorController extends Controller
             $coursesData[] = [
                 'course_id' => $course->course_id,
                 'course_name' => $course->name,
+                'course_section' => $course->Section,
                 'course_code' => $course->Code ?? 'N/A',
             ];
         }
