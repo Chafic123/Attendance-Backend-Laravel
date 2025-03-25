@@ -28,11 +28,12 @@ class AddCourseController extends Controller
 
         $user = User::where('email', $validated['instructor_email'])->first();
 
-        if (!$user || $user->first_name !== $validated['instructor_first_name'] || $user->last_name !== $validated['instructor_last_name']) {
-            return response()->json([
-                'message' => 'Instructor name and email do not match our records.'
-            ], 422);
-        }
+        // if (!$user || $user->first_name !== $validated['instructor_first_name'] || $user->last_name !== $validated['instructor_last_name']) {
+        //     dd($user);
+        //     return response()->json([
+        //         'message' => 'Instructor name and email do not match our records.'
+        //     ], 422);
+        // }
 
         $instructor = Instructor::where('user_id', $user->id)->first();
 
