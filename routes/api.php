@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AddCourseController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Instructor\InstructorController;
 use App\Http\Controllers\MachineLearningController;
+use App\Http\Controllers\VideoController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('auth.login');
@@ -16,7 +17,8 @@ Route::prefix('auth')->group(function () {
         ->middleware('auth:sanctum')
         ->name('auth.logout');
     Route::post('/register', [AuthenticatedSessionController::class, 'register'])->name('auth.register');
-    
+    Route::get('video', [VideoController::class, 'index'])->name('video.index');
+    Route::post('video/encode', [VideoController::class, 'store'])->name('video.encode');
 });
 
 // Admin Routes (Only Admins Can Access)

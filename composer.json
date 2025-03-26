@@ -7,12 +7,15 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "cloudinary-labs/cloudinary-laravel": "^3.0",
+        "cloudinary/cloudinary_php": "^3.1",
         "laravel/breeze": "^2.3",
         "laravel/framework": "^11.41",
         "laravel/passport": "^12.4",
         "laravel/reverb": "^1.4",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "pbmedia/laravel-ffmpeg": "^8.7",
         "php-ai/php-ml": "^0.10.0",
         "pusher/pusher-php-server": "*"
     },
