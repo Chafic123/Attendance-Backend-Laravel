@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AddCourseController;
+use App\Http\Controllers\Admin\EditStudentController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Instructor\InstructorController;
 use App\Http\Controllers\MachineLearningController;
@@ -35,7 +36,13 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
 
     Route::get('/students/{studentId}/courses', [AdminController::class, 'getCoursesForStudent'])
         ->name('admin.student.courses');
-
+    Route::put('/students/{studentId}', [AdminController::class, 'editStudent'])
+        ->name('admin.student.edit');
+        // instructor
+    Route::put('/instructors/{instructorId}', [AdminController::class, 'editInstructor'])
+        ->name('admin.instructor.edit');
+    Route::put('/courses/{courseId}', [AdminController::class, 'editCourse'])
+        ->name('admin.course.edit');
     Route::get('/user', function (Request $request) {
         return $request->user();
     })->name('admin.user');
