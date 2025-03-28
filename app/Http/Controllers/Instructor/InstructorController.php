@@ -8,8 +8,8 @@ use App\Models\Attendance;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use App\Models\Notification;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Cloudinary\Cloudinary;
 use App\Models\Instructor;
 use App\Events\StudentNotification;
 
@@ -153,11 +153,30 @@ class InstructorController extends Controller
             return response()->json(['error' => $instructorValidator->errors()], 400);
         }
 
-        if ($request->hasFile('image')) {
-            $imageFile = $request->file('image');
-            $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
 
-            $instructor->image = $imageData; 
+        $cloudinary = new Cloudinary();
+        $cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key' => env('CLOUDINARY_API_KEY'),
+                'api_secret' => env('CLOUDINARY_API_SECRET'),
+            ],
+        ]);
+
+        if ($request->hasFile('image')) {
+            try {
+                $imageFile = $request->file('image');
+                $uploadedImage = $cloudinary->uploadApi()->upload($imageFile->getRealPath(), [
+                    'folder' => 'Instructors_Image',
+                    'use_filename' => false, 
+                    'unique_filename' => false, 
+                    'overwrite' => true, 
+                    'resource_type' => 'image', 
+                ]);
+                $instructor->image = $uploadedImage['secure_url'];
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Failed to upload image: ' . $e->getMessage()], 500);
+            }
         }
 
         $instructor->phone_number = $request->input('phone_number');
@@ -170,7 +189,7 @@ class InstructorController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'image' => $instructor->image ? 'data:image/jpeg;base64,' . $instructor->image : null,
+            'image' => $instructor->image,
         ]);
     }
 

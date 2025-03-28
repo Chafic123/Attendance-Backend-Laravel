@@ -255,7 +255,7 @@ class StudentController extends Controller
             try {
                 $imageFile = $request->file('image');
                 $uploadedImage = $cloudinary->uploadApi()->upload($imageFile->getRealPath(), [
-                    'folder' => 'Images',
+                    'folder' => 'Students_Image',
                     'use_filename' => false, 
                     'unique_filename' => false, 
                     'overwrite' => true, 
