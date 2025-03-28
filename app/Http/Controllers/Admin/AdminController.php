@@ -25,9 +25,9 @@ class AdminController extends Controller
         $courses = Course::with([
             'instructors' => function ($query) {
                 $query->with([
-                    'User:id,first_name,last_name',
+                    'User:id,first_name,last_name,email',
                     'Department:id,name'
-                ]);
+                ]); 
             },
         ])->paginate(12);
 
