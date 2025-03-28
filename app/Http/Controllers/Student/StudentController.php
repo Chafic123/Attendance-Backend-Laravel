@@ -20,6 +20,10 @@ class StudentController extends Controller
     public function getCoursesForLoggedInStudent()
     {
         $user = Auth::user();
+
+        if (!$user instanceof \App\Models\User) {
+            return response()->json(['error' => 'Invalid user type'], 404);
+        }
         $student = $user->student;
 
         if (!$student) {
@@ -256,10 +260,10 @@ class StudentController extends Controller
                 $imageFile = $request->file('image');
                 $uploadedImage = $cloudinary->uploadApi()->upload($imageFile->getRealPath(), [
                     'folder' => 'Students_Image',
-                    'use_filename' => false, 
-                    'unique_filename' => false, 
-                    'overwrite' => true, 
-                    'resource_type' => 'image', 
+                    'use_filename' => false,
+                    'unique_filename' => false,
+                    'overwrite' => true,
+                    'resource_type' => 'image',
                 ]);
                 $student->image = $uploadedImage['secure_url'];
             } catch (\Exception $e) {
@@ -269,19 +273,28 @@ class StudentController extends Controller
 
         if ($request->hasFile('video')) {
             try {
+                if ($student->video) {
+                    $oldVideoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
+                    dd($oldVideoPublicId);
+                    // Delete old video 
+                    $cloudinary->uploadApi()->destroy($oldVideoPublicId);
+                }
+
                 $videoFile = $request->file('video');
                 $uploadedVideo = $cloudinary->uploadApi()->upload($videoFile->getRealPath(), [
                     'folder' => 'Videos',
-                    'use_filename' => false, 
-                    'unique_filename' => false, 
-                    'overwrite' => true, 
-                    'resource_type' => 'video', 
+                    'use_filename' => false,
+                    'unique_filename' => false,
+                    'overwrite' => true,
+                    'resource_type' => 'video',
                 ]);
+
                 $student->video = $uploadedVideo['secure_url'];
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Failed to upload video: ' . $e->getMessage()], 500);
             }
         }
+
         $student->phone_number = $request->input('phone_number');
 
         try {
@@ -296,6 +309,7 @@ class StudentController extends Controller
             'video' => $student->video,
         ]);
     }
+
 
 
     public function getScheduleReportForLoggedInStudent()
@@ -434,7 +448,7 @@ class StudentController extends Controller
     }
 
 
-    //request correction 
+    // request correction 
 
     public function requestCorrection(Request $request, $attendanceId)
     {
@@ -478,4 +492,73 @@ class StudentController extends Controller
 
         return response()->json(['message' => 'Correction request submitted successfully']);
     }
+
+
+    public function deleteStudentImage()
+    {
+        $student = Auth::user()->student;
+    
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+    
+        $cloudinary = new Cloudinary();
+        $cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key' => env('CLOUDINARY_API_KEY'),
+                'api_secret' => env('CLOUDINARY_API_SECRET'),
+            ],
+        ]);
+    
+        try {
+            if ($student->image) {
+                $imagePublicId = basename(parse_url($student->image, PHP_URL_PATH));
+                $cloudinary->uploadApi()->destroy($imagePublicId);
+                $student->image = null;  
+                $student->save();
+            }
+    
+            return response()->json([
+                'message' => 'Student image deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete image: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteStudentVideo(Request $request)
+{
+    $student = Auth::user()->student;
+
+    if (!$student) {
+        return response()->json(['error' => 'Student not found'], 404);
+    }
+
+    $cloudinary = new Cloudinary();
+    $cloudinary = new Cloudinary([
+        'cloud' => [
+            'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+            'api_key' => env('CLOUDINARY_API_KEY'),
+            'api_secret' => env('CLOUDINARY_API_SECRET'),
+        ],
+    ]);
+
+    try {
+        if ($student->video) {
+            $videoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
+            $cloudinary->uploadApi()->destroy($videoPublicId);
+            $student->video = null;  
+            $student->save();
+        }
+
+        return response()->json([
+            'message' => 'Student video deleted successfully.',
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to delete video: ' . $e->getMessage()], 500);
+    }
+}
+
+    
 }

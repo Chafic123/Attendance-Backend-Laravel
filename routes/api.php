@@ -78,4 +78,12 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
     Route::get('/user', [StudentController::class, 'getAuthenticatedStudent'])->name('student.user');
     // Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
     Route::post('/attendance-requests/{attendanceId}', [StudentController::class, 'requestCorrection'])->name('student.attendance.request');
+    Route::post('/{studentId}/upload-video', [MachineLearningController::class, 'uploadStudentVideo'])
+        ->name('student.upload.video');
+
+    //delete image | video 
+    Route::delete('/{studentId}/delete-image', [StudentController::class, 'deleteStudentImage'])
+        ->name('student.image.delete');
+    Route::delete('/{studentId}/delete-video', [StudentController::class, 'deleteStudentVideo'])
+        ->name('student.video.delete');
 });

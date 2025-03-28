@@ -113,4 +113,25 @@ class MachineLearningController extends Controller
             })
         ]);
     }
+
+
+    //upload student video based on the student Id
+    // public function uploadStudentVideo(Request $request, $studentId)
+    // {
+    //     $request->validate([
+    //         'video' => 'required|mimes:mp4,avi,mov|max:51200', 
+    //     ]);
+
+    //     $student = Student::findOrFail($studentId);
+
+    //     if ($request->hasFile('video')) {
+    //         $videoPath = $request->file('video')->store('videos', 'public');
+    //         $student->video = $videoPath;
+    //         $student->save();
+
+    //         return response()->json(['message' => 'Video uploaded successfully']);
+    //     }
+
+    //     return response()->json(['error' => 'No video file provided'], 400);
+    // }
 }
