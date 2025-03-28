@@ -29,8 +29,8 @@ return new class extends Migration
             $table->string('major');
             $table->string('phone_number');
             $table->string('address')->nullable(); 
-            $table->text('image')->nullable(); 
-            $table->text('video')->nullable(); 
+            $table->string('image')->nullable(); 
+            $table->string('video')->nullable(); 
             $table->timestamps(); 
         });
     }

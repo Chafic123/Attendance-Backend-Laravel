@@ -6,8 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\Response;
+use Cloudinary\Cloudinary;
 use Carbon\Carbon;
 use App\Models\Notification;
 use App\Models\Attendance;
@@ -245,20 +244,47 @@ class StudentController extends Controller
             return response()->json(['error' => $studentValidator->errors()], 400);
         }
 
-        // Convert image and video to Base64 and save in the database
+        // Cloudinary
+        $cloudinary = new Cloudinary();
+        $cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key' => env('CLOUDINARY_API_KEY'),
+                'api_secret' => env('CLOUDINARY_API_SECRET'),
+            ],
+        ]);
+
         if ($request->hasFile('image')) {
-            $imageFile = $request->file('image');
-            $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
-            $student->image = $imageData; // Save Base64-encoded image in database
+            try {
+                $imageFile = $request->file('image');
+                $uploadedImage = $cloudinary->uploadApi()->upload($imageFile->getRealPath(), [
+                    'folder' => 'Images',
+                    'use_filename' => false, 
+                    'unique_filename' => false, 
+                    'overwrite' => true, 
+                    'resource_type' => 'image', 
+                ]);
+                $student->image = $uploadedImage['secure_url'];
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Failed to upload image: ' . $e->getMessage()], 500);
+            }
         }
 
         if ($request->hasFile('video')) {
-            $videoFile = $request->file('video');
-            $videoData = base64_encode(file_get_contents($videoFile->getRealPath()));
-            $student->video = $videoData; // Save Base64-encoded video in database
+            try {
+                $videoFile = $request->file('video');
+                $uploadedVideo = $cloudinary->uploadApi()->upload($videoFile->getRealPath(), [
+                    'folder' => 'Videos',
+                    'use_filename' => false, 
+                    'unique_filename' => false, 
+                    'overwrite' => true, 
+                    'resource_type' => 'video', 
+                ]);
+                $student->video = $uploadedVideo['secure_url'];
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Failed to upload video: ' . $e->getMessage()], 500);
+            }
         }
-
-        // Save phone number
         $student->phone_number = $request->input('phone_number');
 
         try {
@@ -269,8 +295,8 @@ class StudentController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'image' => $student->image ? 'data:image/jpeg;base64,' . $student->image : null,
-            'video' => $student->video ? 'data:video/mp4;base64,' . $student->video : null,
+            'image' => $student->image,
+            'video' => $student->video,
         ]);
     }
 
