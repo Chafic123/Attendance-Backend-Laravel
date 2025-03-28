@@ -83,14 +83,23 @@ class MachineLearningController extends Controller
 
     public function index()
     {
-        $courseSessions = CourseSession::with(['course', 'students.user'])->get();
-
+        // Normally
+        // $today = now()->format('Y-m-d');
+        
+        // FORCE Thursday 
+        $thursdayDate = now()->startOfWeek()->addDays(3)->format('Y-m-d'); // (Monday=0, Tuesday=1, Wednesday=2, Thursday=3)
+        
+        $courseSessions = CourseSession::with(['course', 'students.user'])
+            ->whereDate('date', $thursdayDate) 
+            ->get();
+    
         return response()->json([
             'course_sessions' => $courseSessions->map(function ($session) {
                 return [
                     'session_id' => $session->id,
-                    'course_id' => $session->course_id,
                     'date' => $session->date,
+                    'course_id' => $session->course_id,
+                    'course_name' => $session->course->name,
                     'start_time' => $session->course->start_time, 
                     'end_time' => $session->course->end_time,    
                     'students' => $session->students->map(function ($student) {
