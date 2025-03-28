@@ -43,9 +43,8 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
         ->name('admin.instructor.edit');
     Route::put('/courses/{courseId}', [AdminController::class, 'editCourse'])
         ->name('admin.course.edit');
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->name('admin.user');
+        Route::get('/user', [AdminController::class, 'getAuthenticatedAdmin'])->name('Admin.user');
+
 });
 
 // Instructor Routes (Only Instructors Can Access)

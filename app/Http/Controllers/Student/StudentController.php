@@ -209,7 +209,6 @@ class StudentController extends Controller
             return response()->json(['error' => 'Student not found'], 404);
         }
 
-        // Validate user details
         $userValidator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -219,7 +218,6 @@ class StudentController extends Controller
             return response()->json(['error' => $userValidator->errors()], 400);
         }
 
-        // Update user details
         $user->first_name = $request->input('first_name');
         $user->last_name = $request->input('last_name');
 
@@ -233,7 +231,6 @@ class StudentController extends Controller
             return response()->json(['error' => 'Failed to save user details: ' . $e->getMessage()], 500);
         }
 
-        // Validate student details
         $studentValidator = Validator::make($request->all(), [
             'phone_number' => 'nullable|numeric',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',

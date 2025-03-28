@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Department;
 use App\Models\Instructor;
+use App\Models\Admin;
 
 class AdminController extends Controller
 {
@@ -71,7 +72,21 @@ class AdminController extends Controller
             ->select('id', 'user_id', 'major', 'image', 'video', 'student_id')
             ->paginate(12);
 
-        return response()->json($students); // image will be Base64 due to the mutator in the model
+        return response()->json($students);
+    }
+
+    // Admin details
+
+    public function getAuthenticatedAdmin(Request $request)
+    {
+        $user = $request->user();
+
+        $Admin = Admin::where('user_id', $user->id)->first();
+
+        return response()->json([
+            'user' => $user,
+            'Admin' => $Admin
+        ]);
     }
 
     /**
