@@ -275,7 +275,7 @@ class StudentController extends Controller
             try {
                 if ($student->video) {
                     $oldVideoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
-                    dd($oldVideoPublicId);
+                    // dd($oldVideoPublicId);
                     // Delete old video 
                     $cloudinary->uploadApi()->destroy($oldVideoPublicId);
                 }

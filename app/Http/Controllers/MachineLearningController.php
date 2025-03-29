@@ -13,86 +13,83 @@ use App\Models\CourseSession;
 
 class MachineLearningController extends Controller
 {
-    // public function processVideo(Request $request)
+    // public function processVideos()
     // {
-    //     $user = Auth::user();
+    //     $students = Student::where('processed_video', false)->get();
 
-    //     $student = Student::where('user_id', $user->id)->first();
-
-    //     if (!$student) {
-    //         return response()->json(['error' => 'Student not found'], 404);
+    //     if ($students->isEmpty()) {
+    //         return response()->json(['error' => 'No students found with unprocessed videos'], 404);
     //     }
 
-    //     $videoRelativePath = $student->video;
+    //     $responseData = [];
 
-    //     if (empty($videoRelativePath)) {
-    //         return response()->json(['error' => 'Video path is missing in the database'], 404);
-    //     }
-
-    //     $videoPath = Storage::path('public/' . $videoRelativePath);
-
-    //     if (!file_exists($videoPath)) {
-    //         return response()->json(['error' => 'Video file not found'], 404);
-    //     }
-
-    //     $allowedExtensions = ['mp4', 'avi', 'mov'];
-    //     $extension = pathinfo($videoPath, PATHINFO_EXTENSION);
-
-    //     if (!in_array(strtolower($extension), $allowedExtensions)) {
-    //         return response()->json(['error' => 'Invalid video format. Only MP4, AVI, and MOV are allowed.'], 400);
-    //     }
-
-    //     try {
-    //         // Send the video to the ML 
-    //         $response = Http::withHeaders([
-    //             'Content-Type' => 'multipart/form-data',
-    //         ])->attach(
-    //             'video', fopen($videoPath, 'r'), basename($videoRelativePath)
-    //         )->post('http://127.0.0.1:5000/process-video', [
-    //             'student_id' => $student->student_id,
-    //         ]);
-
-    //         if ($response->successful()) {
-    //             $results = $response->json();
-
-    //             if (isset($results['success'])) {
-    //                 return response()->json([
-    //                     'student_id' => $student->student_id,
-    //                     'video_url' => asset('storage/' . $videoRelativePath),
-    //                     'results' => $results, 
-    //                 ]);
-    //             } else {
-    //                 return response()->json(['error' => 'Unexpected response format from processing server.'], 500);
-    //             }
-    //         } else {
-    //             Log::error('Failed to process video', [
-    //                 'response_status' => $response->status(),
-    //                 'response_body' => $response->body(),
-    //                 'student_id' => $student->student_id
-    //             ]);
-    //             return response()->json(['error' => 'Failed to process video'], 500);
+    //     foreach ($students as $student) {
+    //         if (empty($student->video)) {
+    //             continue;
     //         }
-    //     } catch (\Exception $e) {
-    //         Log::error('Error connecting to ML server', [
-    //             'error_message' => $e->getMessage(),
-    //             'student_id' => $student->student_id
-    //         ]);
-    //         return response()->json(['error' => 'Failed to connect to the processing server'], 500);
+
+    //         $responseData[] = [
+    //             'student_id' => $student->id,
+    //             'message' => 'Processing failed before. Resending video.',
+    //             'video_path' => $student->video
+    //         ];
     //     }
+
+    //     return response()->json($responseData, 200);
     // }
+    public function processVideos()
+    {
+        $students = Student::where('processed_video', false)->get();
+
+        if ($students->isEmpty()) {
+            return response()->json(['error' => 'No students found with unprocessed videos'], 404);
+        }
+
+        $responseData = [];
+
+        foreach ($students as $student) {
+            if (empty($student->video)) {
+                continue;
+            }
+
+            $mlResponse = Http::post('http://127.0.0.1:5000/processedvideo', [
+                'student_id' => $student->id,
+                'video_path' => $student->video  
+            ]);
+
+            if ($mlResponse->successful()) {
+                $student->processed_video = true;
+                $student->save();
+
+                $responseData[] = [
+                    'student_id' => $student->id,
+                    'message' => 'Video sent to ML for processing',
+                    'ml_response' => $mlResponse->json() 
+                ];
+            } else {
+                $responseData[] = [
+                    'student_id' => $student->id,
+                    'error' => 'ML processing failed, please try again later'
+                ];
+            }
+        }
+
+        return response()->json($responseData, 200);
+    }
+
 
     public function index()
     {
         // Normally
         $today = now()->format('Y-m-d');
-        
+
         // FORCE Thursday 
         // $thursdayDate = now()->startOfWeek()->addDays(3)->format('Y-m-d'); // (Monday=0, Tuesday=1, Wednesday=2, Thursday=3)
-        
+
         $courseSessions = CourseSession::with(['course', 'students.user'])
-            ->whereDate('date', $today) 
+            ->whereDate('date', $today)
             ->get();
-    
+
         return response()->json([
             'course_sessions' => $courseSessions->map(function ($session) {
                 return [
@@ -101,8 +98,8 @@ class MachineLearningController extends Controller
                     'course_id' => $session->course_id,
                     'course_name' => $session->course->name,
                     'course_section' => $session->course->Section,
-                    'start_time' => $session->course->start_time, 
-                    'end_time' => $session->course->end_time,    
+                    'start_time' => $session->course->start_time,
+                    'end_time' => $session->course->end_time,
                     'students' => $session->students->map(function ($student) {
                         return [
                             'student_id' => $student->id,

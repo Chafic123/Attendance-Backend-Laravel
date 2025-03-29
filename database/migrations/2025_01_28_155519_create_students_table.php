@@ -30,7 +30,8 @@ return new class extends Migration
             $table->string('phone_number');
             $table->string('address')->nullable(); 
             $table->string('image')->nullable(); 
-            $table->string('video')->nullable(); 
+            $table->string('video')->nullable();
+            $table->string('processed_video')->default(false)->after('video');
             $table->timestamps(); 
         });
     }

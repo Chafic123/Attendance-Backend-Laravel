@@ -18,8 +18,11 @@ Route::prefix('auth')->group(function () {
         ->middleware('auth:sanctum')
         ->name('auth.logout');
     Route::post('/register', [AuthenticatedSessionController::class, 'register'])->name('auth.register');
-    Route::get('video', [VideoController::class, 'index'])->name('video.index');
-    Route::post('video/encode', [VideoController::class, 'store'])->name('video.encode');
+    // Route::get('video', [VideoController::class, 'index'])->name('video.index');
+    // Route::post('video/encode', [VideoController::class, 'store'])->name('video.encode');
+
+    Route::get('/upload-videos', [MachineLearningController::class, 'processVideos'])->name('student.video.upload');
+
 });
 
 // Admin Routes (Only Admins Can Access)
@@ -78,7 +81,6 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
         ->name('student.schedule.report');
     Route::post('/profile', [StudentController::class, 'updateStudentProfile'])->name('student.profile.update');
     Route::get('/user', [StudentController::class, 'getAuthenticatedStudent'])->name('student.user');
-    // Route::post('/upload-video', [MachineLearningController::class, 'processVideo'])->name('student.video.upload');
     Route::post('/attendance-requests/{attendanceId}', [StudentController::class, 'requestCorrection'])->name('student.attendance.request');
     Route::post('/{studentId}/upload-video', [MachineLearningController::class, 'uploadStudentVideo'])
         ->name('student.upload.video');
