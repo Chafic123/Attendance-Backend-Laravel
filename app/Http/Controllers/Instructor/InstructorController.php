@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Validator;
 use Cloudinary\Cloudinary;
 use App\Models\Instructor;
 use App\Events\StudentNotification;
+use Carbon\Carbon;
+use App\Models\CourseSession;
 
 class InstructorController extends Controller
 {
@@ -121,7 +123,6 @@ class InstructorController extends Controller
             return response()->json(['error' => 'Instructor not found'], 404);
         }
 
-        // Validate user details
         $userValidator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -168,10 +169,10 @@ class InstructorController extends Controller
                 $imageFile = $request->file('image');
                 $uploadedImage = $cloudinary->uploadApi()->upload($imageFile->getRealPath(), [
                     'folder' => 'Instructors_Image',
-                    'use_filename' => false, 
-                    'unique_filename' => false, 
-                    'overwrite' => true, 
-                    'resource_type' => 'image', 
+                    'use_filename' => false,
+                    'unique_filename' => false,
+                    'overwrite' => true,
+                    'resource_type' => 'image',
                 ]);
                 $instructor->image = $uploadedImage['secure_url'];
             } catch (\Exception $e) {
@@ -248,4 +249,42 @@ class InstructorController extends Controller
 
         return response()->json($response);
     }
+
+
+
+    public function getCourseCalendar($courseId)
+    {
+        $course = Course::find($courseId);
+        
+        if (!$course) {
+            return response()->json([
+                'error' => 'Course not found'
+            ], 404);
+        }
+
+        $sessions = CourseSession::where('course_id', $courseId)
+            ->orderBy('date')
+            ->get(['date']);
+
+        $currentDate = Carbon::now()->toDateString();
+        
+        $enhancedSessions = $sessions->map(function ($session) use ($currentDate) {
+            return [
+                'date' => $session->date,
+                'is_current_day' => $session->date === $currentDate,
+                'day_name' => Carbon::parse($session->date)->format('l')
+            ];
+        });
+
+        return response()->json([
+            'course_id' => $course->id,
+            'course_name' => $course->name,
+            'course_code' => $course->Code,
+            'total_sessions' => $sessions->count(),
+            'current_date' => $currentDate, 
+            'has_current_day' => $enhancedSessions->contains('is_current_day', true),
+            'sessions' => $enhancedSessions
+        ]);
+    }
+    
 }

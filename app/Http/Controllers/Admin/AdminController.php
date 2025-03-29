@@ -11,6 +11,7 @@ use App\Models\CourseSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 use App\Models\Department;
 use App\Models\Instructor;
 use App\Models\Admin;
@@ -48,19 +49,19 @@ class AdminController extends Controller
 
         return response()->json($instructors);
     }
-    public function getCourseCalendar($courseId)
-    {
-        $course = Course::find($courseId);
-        $sessions = CourseSession::where('course_id', $courseId)
-            ->orderBy('date')
-            ->get();
-        // dd($sessions);
-        if (!$course) {
-            return response()->json(['message' => 'Course not found'], 404);
-        }
+    // public function getCourseStudentCalendar($studentId , $courseId)
+    // {
+    //     $course = Course::find($courseId);
+    //     $sessions = CourseSession::where('course_id', $courseId)
+    //         ->orderBy('date')
+    //         ->get();
+    //     // dd($sessions);
+    //     if (!$course) {
+    //         return response()->json(['message' => 'Course not found'], 404);
+    //     }
 
-        return response()->json($sessions);
-    }
+    //     return response()->json($sessions);
+    // }
 
     /**
      * Get all students with their associated user data.
@@ -96,26 +97,28 @@ class AdminController extends Controller
     public function getAllAdminStudentsCourse($courseId)
     {
         $course = Course::find($courseId);
-
+    
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-
-        $students = $course->students()->with('user:id,first_name,last_name')->get();
-
+    
+        $students = $course->students()->with('user:id,first_name,last_name,email')->get();
+    
         $students = $students->map(function ($student) {
             return [
                 'student_id' => $student->student_id,
                 'first_name' => optional($student->user)->first_name,
-                'last_name' => optional($student->user)->last_name,
-                'major' => $student->major,
-                'image' => $student->image,
-                'video' => $student->video,
+                'last_name'  => optional($student->user)->last_name,
+                'email'      => optional($student->user)->email,
+                'department' => optional($student->department)->name,
+                'major'      => $student->major,
+                'image'      => $student->image,
             ];
         });
-
+    
         return response()->json($students);
     }
+    
 
     /**
      * Get courses for a specific student, including instructor details.
@@ -225,6 +228,7 @@ class AdminController extends Controller
             'email' => 'required|email|max:255|exists:users,email',
             'phone' => 'required|string|max:15',
             'department' => 'required|string|max:255|exists:departments,name',
+            'major' => 'required|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -252,6 +256,7 @@ class AdminController extends Controller
         ]);
 
         $student->update([
+            'major' => $request->major,
             'phone_number' => $request->phone,
             'department_id' => $department->id,
         ]);
@@ -366,5 +371,40 @@ class AdminController extends Controller
                 'full_name' => $user->first_name . ' ' . $user->last_name,
             ]
         ], 200);
+    }
+
+    public function getCourseCalendar($courseId)
+    {
+        $course = Course::find($courseId);
+        
+        if (!$course) {
+            return response()->json([
+                'error' => 'Course not found'
+            ], 404);
+        }
+
+        $sessions = CourseSession::where('course_id', $courseId)
+            ->orderBy('date')
+            ->get(['date']);
+
+        $currentDate = Carbon::now()->toDateString();
+        
+        $enhancedSessions = $sessions->map(function ($session) use ($currentDate) {
+            return [
+                'date' => $session->date,
+                'is_current_day' => $session->date === $currentDate,
+                'day_name' => Carbon::parse($session->date)->format('l')
+            ];
+        });
+
+        return response()->json([
+            'course_id' => $course->id,
+            'course_name' => $course->name,
+            'course_code' => $course->Code,
+            'total_sessions' => $sessions->count(),
+            'current_date' => $currentDate, 
+            'has_current_day' => $enhancedSessions->contains('is_current_day', true),
+            'sessions' => $enhancedSessions
+        ]);
     }
 }

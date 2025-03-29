@@ -60,6 +60,8 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
     Route::get('/schedule-report', [InstructorController::class, 'getScheduleReportForLoggedInInstructor'])
         ->name('Instructor.schedule.report');
     Route::get('/user', [InstructorController::class, 'getAuthenticatedStudent'])->name('Instructor.user');
+    Route::get('/courses/{courseId}/calendar', [InstructorController::class, 'getCourseCalendar'])
+        ->name('instructor.course.calendar');
 
 });
 
