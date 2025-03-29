@@ -84,13 +84,13 @@ class MachineLearningController extends Controller
     public function index()
     {
         // Normally
-        // $today = now()->format('Y-m-d');
+        $today = now()->format('Y-m-d');
         
         // FORCE Thursday 
-        $thursdayDate = now()->startOfWeek()->addDays(3)->format('Y-m-d'); // (Monday=0, Tuesday=1, Wednesday=2, Thursday=3)
+        // $thursdayDate = now()->startOfWeek()->addDays(3)->format('Y-m-d'); // (Monday=0, Tuesday=1, Wednesday=2, Thursday=3)
         
         $courseSessions = CourseSession::with(['course', 'students.user'])
-            ->whereDate('date', $thursdayDate) 
+            ->whereDate('date', $today) 
             ->get();
     
         return response()->json([
@@ -100,6 +100,7 @@ class MachineLearningController extends Controller
                     'date' => $session->date,
                     'course_id' => $session->course_id,
                     'course_name' => $session->course->name,
+                    'course_section' => $session->course->Section,
                     'start_time' => $session->course->start_time, 
                     'end_time' => $session->course->end_time,    
                     'students' => $session->students->map(function ($student) {
@@ -113,7 +114,6 @@ class MachineLearningController extends Controller
             })
         ]);
     }
-
 
     //upload student video based on the student Id
     // public function uploadStudentVideo(Request $request, $studentId)
