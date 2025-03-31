@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AddCourseController;
+use App\Http\Controllers\Admin\AddInstructorController;
 use App\Http\Controllers\Admin\AddStudentController;
 use App\Http\Controllers\Admin\EditStudentController;
 use App\Http\Controllers\Student\StudentController;
@@ -47,7 +48,10 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
         ->name('admin.instructor.edit');
     Route::put('/courses/{courseId}', [AdminController::class, 'editCourse'])
         ->name('admin.course.edit');
-        Route::get('/user', [AdminController::class, 'getAuthenticatedAdmin'])->name('Admin.user');
+    Route::post('/add-instructor', [AddInstructorController::class, 'addInstructor'])
+        ->name('admin.instructor.add');
+
+    Route::get('/user', [AdminController::class, 'getAuthenticatedAdmin'])->name('Admin.user');
 
 });
 
