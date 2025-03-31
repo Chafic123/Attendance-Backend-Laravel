@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AddCourseController;
+use App\Http\Controllers\Admin\AddStudentController;
 use App\Http\Controllers\Admin\EditStudentController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Instructor\InstructorController;
@@ -22,7 +23,7 @@ Route::prefix('auth')->group(function () {
     // Route::post('video/encode', [VideoController::class, 'store'])->name('video.encode');
 
     Route::get('/upload-videos', [MachineLearningController::class, 'processVideos'])->name('student.video.upload');
-
+    Route::post('/update-processed-status', [MachineLearningController::class, 'updateProcessedStatus'])->name('student.video.update');
 });
 
 // Admin Routes (Only Admins Can Access)
@@ -36,7 +37,7 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
 
     Route::post('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
     Route::post('/Addcourse', [AddCourseController::class, 'store'])->name('admin.course.add');
-
+    Route::post('/add-student', [AddStudentController::class, 'addStudent'])->name('admin.student.add');
     Route::get('/students/{studentId}/courses', [AdminController::class, 'getCoursesForStudent'])
         ->name('admin.student.courses');
     Route::put('/students/{studentId}', [AdminController::class, 'editStudent'])

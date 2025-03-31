@@ -21,6 +21,7 @@ class Student extends Model
         'image',
         'video',
         'processed_video',
+        'personal_email',
     ];
 
     protected static function booted()

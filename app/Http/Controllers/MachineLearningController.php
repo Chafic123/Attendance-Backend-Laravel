@@ -13,30 +13,6 @@ use App\Models\CourseSession;
 
 class MachineLearningController extends Controller
 {
-    // public function processVideos()
-    // {
-    //     $students = Student::where('processed_video', false)->get();
-
-    //     if ($students->isEmpty()) {
-    //         return response()->json(['error' => 'No students found with unprocessed videos'], 404);
-    //     }
-
-    //     $responseData = [];
-
-    //     foreach ($students as $student) {
-    //         if (empty($student->video)) {
-    //             continue;
-    //         }
-
-    //         $responseData[] = [
-    //             'student_id' => $student->id,
-    //             'message' => 'Processing failed before. Resending video.',
-    //             'video_path' => $student->video
-    //         ];
-    //     }
-
-    //     return response()->json($responseData, 200);
-    // }
     public function processVideos()
     {
         $students = Student::where('processed_video', false)->get();
@@ -45,38 +21,40 @@ class MachineLearningController extends Controller
             return response()->json(['error' => 'No students found with unprocessed videos'], 404);
         }
 
-        $responseData = [];
-
-        foreach ($students as $student) {
-            if (empty($student->video)) {
-                continue;
-            }
-
-            $mlResponse = Http::post('http://127.0.0.1:5000/processedvideo', [
-                'student_id' => $student->id,
-                'video_path' => $student->video  
-            ]);
-
-            if ($mlResponse->successful()) {
-                $student->processed_video = true;
-                $student->save();
-
-                $responseData[] = [
+        return response()->json([
+            'students' => $students->map(function ($student) {
+                return [
                     'student_id' => $student->id,
-                    'message' => 'Video sent to ML for processing',
-                    'ml_response' => $mlResponse->json() 
+                    'video_path' => $student->video,
                 ];
-            } else {
-                $responseData[] = [
-                    'student_id' => $student->id,
-                    'error' => 'ML processing failed, please try again later'
-                ];
-            }
-        }
-
-        return response()->json($responseData, 200);
+            })
+        ]);
     }
 
+    public function updateProcessedStatus(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'processed' => 'required|in:0,1',
+        ]);
+    
+        Log::info("Incoming data: ", $request->all());
+    
+        $student = Student::find($request->student_id);
+        if (!$student) {
+            Log::error("Student not found with ID: " . $request->student_id);
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+    
+        Log::info("Updating student: " . $student->id);
+        $student->processed_video = (string) $request->processed;  
+        $student->save();
+    
+        Log::info("Student ID {$student->id} video processing status updated to: {$student->processed_video}");
+    
+        return response()->json(['message' => 'Processing status updated successfully']);
+    }
+    
 
     public function index()
     {
@@ -111,24 +89,4 @@ class MachineLearningController extends Controller
             })
         ]);
     }
-
-    //upload student video based on the student Id
-    // public function uploadStudentVideo(Request $request, $studentId)
-    // {
-    //     $request->validate([
-    //         'video' => 'required|mimes:mp4,avi,mov|max:51200', 
-    //     ]);
-
-    //     $student = Student::findOrFail($studentId);
-
-    //     if ($request->hasFile('video')) {
-    //         $videoPath = $request->file('video')->store('videos', 'public');
-    //         $student->video = $videoPath;
-    //         $student->save();
-
-    //         return response()->json(['message' => 'Video uploaded successfully']);
-    //     }
-
-    //     return response()->json(['error' => 'No video file provided'], 400);
-    // }
 }

@@ -20,7 +20,7 @@ return new class extends Migration
                 ->references('id')
                 ->on('users')
                 ->onDelete('cascade');
-        
+
             $table->foreign('department_id')
                 ->references('id')
                 ->on('departments')
@@ -28,11 +28,12 @@ return new class extends Migration
 
             $table->string('major');
             $table->string('phone_number');
-            $table->string('address')->nullable(); 
-            $table->string('image')->nullable(); 
+            $table->string('personal_email')->unique()->after('phone_number')->nullable();
+            $table->string('address')->nullable();
+            $table->string('image')->nullable();
             $table->string('video')->nullable();
-            $table->string('processed_video')->default(false)->after('video');
-            $table->timestamps(); 
+            $table->string('processed_video')->default('0')->after('video');
+            $table->timestamps();
         });
     }
 

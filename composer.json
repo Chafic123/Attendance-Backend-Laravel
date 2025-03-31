@@ -15,6 +15,7 @@
         "laravel/reverb": "^1.4",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "mailjet/laravel-mailjet": "^3.1",
         "pbmedia/laravel-ffmpeg": "^8.7",
         "php-ai/php-ml": "^0.10.0",
         "pusher/pusher-php-server": "*"
