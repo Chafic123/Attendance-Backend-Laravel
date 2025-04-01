@@ -8,8 +8,11 @@ class InstructorEmailService
 {
     public static function generateEmail($firstName, $lastName, $domain = 'instructors.rhu.edu')
     {
-        $firstPart = strtolower(substr($firstName, 0, 2)); 
-        $lastPart = strtolower($lastName);
+        $cleanFirstName = preg_replace('/[^a-zA-Z]/', '', $firstName);
+        $cleanLastName = preg_replace('/[^a-zA-Z]/', '', $lastName);
+        
+        $firstPart = strtolower(substr($cleanFirstName, 0, 2)); 
+        $lastPart = strtolower($cleanLastName);
         
         $baseEmail = "{$lastPart}{$firstPart}@{$domain}";
         $email = $baseEmail;

@@ -27,7 +27,6 @@ class AddInstructorController extends Controller
             $email = InstructorEmailService::generateEmail(
                 $validated['first_name'],
                 $validated['last_name'],
-                $validated['department_id']
             );
 
             $plainPassword = PasswordService::generateTemporaryPassword();
@@ -57,12 +56,11 @@ class AddInstructorController extends Controller
             );
 
             return response()->json([
-                'message' => 'Student added successfully!',
+                'message' => 'Instructor added successfully!',
                 'email' => $email,
                 'personal_email' => $validated['personal_email'],
                 'temporary_password' => $plainPassword,
                 'department' => $department->name,
-                'major' => $validated['major']
             ], 201);
         });
     }
@@ -75,12 +73,12 @@ class AddInstructorController extends Controller
             'phone_number' => [
                 'required',
                 'string',
-                'unique:students,phone_number',
+                'unique:instructors,phone_number',
             ],
             'personal_email' => [
                 'required',
                 'email:rfc,dns',
-                'unique:students,personal_email',
+                'unique:instructors,personal_email',
                 'unique:users,email',
                 'max:255'
             ],
@@ -102,7 +100,10 @@ class AddInstructorController extends Controller
                     $instructorEmail,
                     $personalEmail,
                     $password,
-                    $departmentName
+                    $departmentName,
+                    // route('login'),
+                    // route('privacy'),
+                    // route('support')
                 ));
             Log::info("Welcome email sent to {$personalEmail}");
         } catch (\Exception $e) {

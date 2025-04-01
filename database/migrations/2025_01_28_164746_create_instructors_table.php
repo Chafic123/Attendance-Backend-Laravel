@@ -24,8 +24,7 @@ return new class extends Migration
             $table->foreign('department_id')
             ->references('id')
             ->on('departments');
-
-            $table->string('username');
+            $table->string('personal_email')->unique()->after('phone_number')->nullable();
             $table->string('phone_number');
             $table->string('image')->nullable(); 
             $table->timestamps(); 

@@ -16,9 +16,9 @@ class Instructor extends Model
     protected $fillable = [
         'user_id',
         'department_id',
-        'username',
         'phone_number',
         'image',
+        'personal_email',
     ];
     
     public function user()

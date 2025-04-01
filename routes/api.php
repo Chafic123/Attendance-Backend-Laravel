@@ -43,16 +43,14 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
         ->name('admin.student.courses');
     Route::put('/students/{studentId}', [AdminController::class, 'editStudent'])
         ->name('admin.student.edit');
-        // instructor
+    // instructor
     Route::put('/instructors/{instructorId}', [AdminController::class, 'editInstructor'])
         ->name('admin.instructor.edit');
     Route::put('/courses/{courseId}', [AdminController::class, 'editCourse'])
         ->name('admin.course.edit');
     Route::post('/add-instructor', [AddInstructorController::class, 'addInstructor'])
         ->name('admin.instructor.add');
-
     Route::get('/user', [AdminController::class, 'getAuthenticatedAdmin'])->name('Admin.user');
-
 });
 
 // Instructor Routes (Only Instructors Can Access)
@@ -70,7 +68,6 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
     Route::get('/user', [InstructorController::class, 'getAuthenticatedStudent'])->name('Instructor.user');
     Route::get('/courses/{courseId}/calendar', [InstructorController::class, 'getCourseCalendar'])
         ->name('instructor.course.calendar');
-
 });
 
 // Student Routes (Only Students Can Access)

@@ -25,8 +25,6 @@
             <div class="credentials">
                 <p><strong>University Email:</strong> {{ $studentEmail }}</p>
                 <p><strong>Password:</strong> {{ $password }}</p>
-                <p><strong>Major:</strong> {{ $major }}</p>
-                <p><strong>Department:</strong> {{ $departmentName }}</p>
             </div>
                         
             <p>If you didn't request this account, please contact the administration.</p>
