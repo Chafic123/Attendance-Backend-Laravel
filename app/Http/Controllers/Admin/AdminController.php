@@ -72,7 +72,7 @@ class AdminController extends Controller
             'user:id,first_name,last_name,email',
             'department:id,name'
         ])
-            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id')
+            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id','department_id')
             ->paginate(12);
 
         return response()->json($students);
