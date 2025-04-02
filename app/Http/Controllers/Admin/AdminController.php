@@ -11,6 +11,7 @@ use App\Models\CourseSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Department;
 use App\Models\Instructor;
@@ -44,7 +45,7 @@ class AdminController extends Controller
             ->with([
                 'instructor.department:id,name'
             ])
-            ->select('id', 'first_name', 'last_name','email')
+            ->select('id', 'first_name', 'last_name', 'email')
             ->paginate(12);
 
         return response()->json($instructors);
@@ -311,36 +312,50 @@ class AdminController extends Controller
     }
 
     //Enroll student 
-    public function enrollStudent(Request $request)
+    public function enrollStudents(Request $request)
     {
         $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
             'course_id' => 'required|exists:courses,id',
         ]);
 
-        $student = Student::findOrFail($request->student_id);
+        $students = Student::whereIn('id', $request->student_ids)->get();
 
+        foreach ($students as $student) {
+            $student->courses()->syncWithoutDetaching([
+                $request->course_id => ['enrollment_date' => now()->toDateString()]
+            ]);
+        }
 
-        $student->courses()->syncWithoutDetaching([
-            $request->course_id => ['enrollment-date' => now()->toDateString()]
-        ]);
-
-        return response()->json(['message' => 'Student enrolled successfully']);
+        return response()->json(['message' => 'Students enrolled successfully']);
     }
+
     //Eneoll Instructor 
-    public function enrollInstructor(Request $request)
+    public function enrollMultipleInstructors(Request $request)
     {
         $request->validate([
-            'instructor_id' => 'required|exists:instructors,id',
+            'instructor_ids' => 'required|array',
+            'instructor_ids.*' => 'exists:instructors,id',
             'course_id' => 'required|exists:courses,id',
         ]);
 
-        $instructor = Instructor::findOrFail($request->instructor_id);
+        $courseId = $request->course_id;
 
-        $instructor->courses()->syncWithoutDetaching([$request->course_id]);
+        foreach ($request->instructor_ids as $instructorId) {
+            $exists = DB::table('course_instructor')
+                ->where('instructor_id', $instructorId)
+                ->where('course_id', $courseId)
+                ->exists();
 
-        return response()->json(['message' => 'Instructor enrolled successfully']);
+            if (!$exists) {
+                Instructor::findOrFail($instructorId)->courses()->attach($courseId);
+            }
+        }
+
+        return response()->json(['message' => 'Instructors enrolled successfully']);
     }
+
 
 
     // Edit Course
