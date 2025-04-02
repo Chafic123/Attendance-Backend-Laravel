@@ -6,14 +6,15 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class CourseStudent extends Pivot
 {
-    protected $table = 'course_student';  // Explicitly define the pivot table name
+    protected $table = 'course_student'; 
 
     protected $fillable = [
         'course_id',
-        'student_id'
+        'student_id',
+        'enrollment-date',
     ];
 
-    public $timestamps = false; // Disable timestamps if not needed
+    public $timestamps = true; 
 
     public function student()
     {

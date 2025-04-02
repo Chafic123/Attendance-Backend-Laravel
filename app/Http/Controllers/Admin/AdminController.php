@@ -44,7 +44,7 @@ class AdminController extends Controller
             ->with([
                 'instructor.department:id,name'
             ])
-            ->select('id', 'first_name', 'last_name')
+            ->select('id', 'first_name', 'last_name','email')
             ->paginate(12);
 
         return response()->json($instructors);
@@ -72,7 +72,7 @@ class AdminController extends Controller
             'user:id,first_name,last_name,email',
             'department:id,name'
         ])
-            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id','department_id')
+            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id')
             ->paginate(12);
 
         return response()->json($students);
@@ -309,6 +309,39 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Instructor updated successfully']);
     }
+
+    //Enroll student 
+    public function enrollStudent(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'course_id' => 'required|exists:courses,id',
+        ]);
+
+        $student = Student::findOrFail($request->student_id);
+
+
+        $student->courses()->syncWithoutDetaching([
+            $request->course_id => ['enrollment-date' => now()->toDateString()]
+        ]);
+
+        return response()->json(['message' => 'Student enrolled successfully']);
+    }
+    //Eneoll Instructor 
+    public function enrollInstructor(Request $request)
+    {
+        $request->validate([
+            'instructor_id' => 'required|exists:instructors,id',
+            'course_id' => 'required|exists:courses,id',
+        ]);
+
+        $instructor = Instructor::findOrFail($request->instructor_id);
+
+        $instructor->courses()->syncWithoutDetaching([$request->course_id]);
+
+        return response()->json(['message' => 'Instructor enrolled successfully']);
+    }
+
 
     // Edit Course
 
