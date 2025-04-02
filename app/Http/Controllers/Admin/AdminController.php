@@ -28,7 +28,7 @@ class AdminController extends Controller
                 $query->with([
                     'User:id,first_name,last_name,email',
                     'Department:id,name'
-                ]); 
+                ]);
             },
         ])->paginate(12);
 
@@ -97,15 +97,17 @@ class AdminController extends Controller
     public function getAllAdminStudentsCourse($courseId)
     {
         $course = Course::find($courseId);
-    
+
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-    
+
         $students = $course->students()->with('user:id,first_name,last_name,email')->get();
-    
+
         $students = $students->map(function ($student) {
             return [
+                'id'         => $student->id,
+                'user_id'    => $student->user_id,
                 'student_id' => $student->student_id,
                 'first_name' => optional($student->user)->first_name,
                 'last_name'  => optional($student->user)->last_name,
@@ -115,10 +117,10 @@ class AdminController extends Controller
                 'image'      => $student->image,
             ];
         });
-    
+
         return response()->json($students);
     }
-    
+
 
     /**
      * Get courses for a specific student, including instructor details.
@@ -319,7 +321,7 @@ class AdminController extends Controller
                 Rule::unique('courses')->where(fn($query) => $query->where('Section', $request->section))
                     ->ignore($courseId),
             ],
-            'section' => 'required|integer', 
+            'section' => 'required|integer',
             'name' => 'required|string|max:255',
             'instructor_email' => 'required|email|exists:users,email',
             'start_time' => 'required|date_format:H:i',
@@ -355,7 +357,7 @@ class AdminController extends Controller
             'end_time' => $request->end_time,
             'day_of_week' => $request->day_of_week,
             'Room' => $request->room,
-            'Section' => $request->section, 
+            'Section' => $request->section,
             'credits' => $request->credits,
         ]);
 
@@ -376,7 +378,7 @@ class AdminController extends Controller
     public function getCourseCalendar($courseId)
     {
         $course = Course::find($courseId);
-        
+
         if (!$course) {
             return response()->json([
                 'error' => 'Course not found'
@@ -388,7 +390,7 @@ class AdminController extends Controller
             ->get(['date']);
 
         $currentDate = Carbon::now()->toDateString();
-        
+
         $enhancedSessions = $sessions->map(function ($session) use ($currentDate) {
             return [
                 'date' => $session->date,
@@ -402,7 +404,7 @@ class AdminController extends Controller
             'course_name' => $course->name,
             'course_code' => $course->Code,
             'total_sessions' => $sessions->count(),
-            'current_date' => $currentDate, 
+            'current_date' => $currentDate,
             'has_current_day' => $enhancedSessions->contains('is_current_day', true),
             'sessions' => $enhancedSessions
         ]);
