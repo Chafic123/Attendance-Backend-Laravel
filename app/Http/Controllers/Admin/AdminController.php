@@ -69,7 +69,8 @@ class AdminController extends Controller
     public function getAllStudents()
     {
         $students = Student::with([
-            'user:id,first_name,last_name,email'
+            'user:id,first_name,last_name,email',
+            'department:id,name'
         ])
             ->select('id', 'user_id', 'major', 'image', 'video', 'student_id')
             ->paginate(12);
