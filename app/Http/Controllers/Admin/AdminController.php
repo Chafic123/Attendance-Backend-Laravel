@@ -332,7 +332,7 @@ class AdminController extends Controller
     }
 
     //Eneoll Instructor 
-    public function enrollMultipleInstructors(Request $request)
+    public function enrollInstructors(Request $request)
     {
         $request->validate([
             'instructor_ids' => 'required|array',
