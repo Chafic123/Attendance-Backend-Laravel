@@ -76,6 +76,9 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
         ->name('instructor.course.calendar');
         Route::get('/students/{studentId}/courses/{courseId}', [InstructorController::class, 'getStudentCalendar'])
         ->name('instructor.student.course.calendar');
+        Route::get('requests', [InstructorController::class, 'getRequestsForInstructor']);
+    Route::post('/requests/{requestId}/update-status', [InstructorController::class, 'updateRequestStatus'])
+        ->name('instructor.request.update.status');
 });
 
 // Student Routes (Only Students Can Access)

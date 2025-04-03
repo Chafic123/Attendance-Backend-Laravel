@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\Course;
+use App\Models\AttendanceRequest;
 use Illuminate\Http\Request;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Validator;
@@ -43,6 +44,55 @@ class InstructorController extends Controller
         }
 
         return response()->json($coursesData);
+    }
+
+    public function getRequestsForInstructor()
+    {
+        $instructor = Auth::user()->instructor;
+
+        if (!$instructor) {
+            return response()->json(['error' => 'Unauthorized request'], 403);
+        }
+
+        $requests = AttendanceRequest::where('instructor_id', $instructor->id)
+            ->with(['student', 'attendance'])
+            ->get();
+
+        return response()->json([
+            'requests' => $requests,
+        ]);
+    }
+
+    // Update request correction 
+
+    public function updateRequestStatus(Request $request, $requestId)
+    {
+        $instructor = Auth::user()->instructor;
+
+        if (!$instructor) {
+            return response()->json(['error' => 'Unauthorized request'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+        ]);
+
+        $attendanceRequest = AttendanceRequest::with('attendance')->find($requestId);
+
+        if (!$attendanceRequest || $attendanceRequest->instructor_id !== $instructor->id) {
+            return response()->json(['error' => 'Request not found or unauthorized'], 404);
+        }
+
+        if ($request->status === 'approved') {
+
+            if ($attendanceRequest->attendance) {
+                $attendanceRequest->attendance->update(['is_present' => true]);
+            }
+        }
+
+        $attendanceRequest->update(['status' => $request->status]);
+
+        return response()->json(['message' => 'Attendance request ' . $request->status . ' successfully']);
     }
 
     public function getAllStudentsCourse($courseId, $returnJson = true)
@@ -254,7 +304,7 @@ class InstructorController extends Controller
     public function getCourseCalendar($courseId)
     {
         $course = Course::find($courseId);
-        
+
         if (!$course) {
             return response()->json([
                 'error' => 'Course not found'
@@ -266,7 +316,7 @@ class InstructorController extends Controller
             ->get(['date']);
 
         $currentDate = Carbon::now()->toDateString();
-        
+
         $enhancedSessions = $sessions->map(function ($session) use ($currentDate) {
             return [
                 'date' => $session->date,
@@ -280,7 +330,7 @@ class InstructorController extends Controller
             'course_name' => $course->name,
             'course_code' => $course->Code,
             'total_sessions' => $sessions->count(),
-            'current_date' => $currentDate, 
+            'current_date' => $currentDate,
             'has_current_day' => $enhancedSessions->contains('is_current_day', true),
             'sessions' => $enhancedSessions
         ]);
@@ -322,5 +372,4 @@ class InstructorController extends Controller
 
         return response()->json($calendarData);
     }
-    
 }

@@ -13,6 +13,7 @@ class AttendanceRequest extends Model
         'course_id',
         'reason',
         'request_date',
+        'instructor_id',
         'status'
     ];
 
@@ -29,5 +30,8 @@ class AttendanceRequest extends Model
     {
         return $this->belongsTo(Course::class);
     }
-    
+    public function instructor()
+    {
+        return $this->belongsTo(Instructor::class);
+    }
 }

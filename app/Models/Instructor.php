@@ -40,4 +40,9 @@ class Instructor extends Model
     {
         return $this->hasMany(Notification::class);
     }
+
+    public function attendanceRequests()
+    {
+        return $this->hasMany(AttendanceRequest::class, 'instructor_id');
+    }
 }

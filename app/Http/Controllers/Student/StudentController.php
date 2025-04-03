@@ -477,6 +477,7 @@ class StudentController extends Controller
         }
 
         $instructor = $course->instructors()->first();
+        // dd($instructor->id);
         if (!$instructor) {
             return response()->json(['error' => 'Instructor not found'], 404);
         }
