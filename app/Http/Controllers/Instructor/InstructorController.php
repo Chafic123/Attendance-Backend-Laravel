@@ -65,6 +65,7 @@ class InstructorController extends Controller
                     'attendance_id' => $request->attendance_id,
                     'course_id' => $request->course->id ?? null,
                     'course_name' => $request->course->name ?? 'N/A',
+                    'reason' => $request->reason,
                     'request_date' => $request->request_date,
                     'status' => $request->status,
                 ];
