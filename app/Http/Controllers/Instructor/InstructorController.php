@@ -45,19 +45,31 @@ class InstructorController extends Controller
 
         return response()->json($coursesData);
     }
-
     public function getRequestsForInstructor()
     {
         $instructor = Auth::user()->instructor;
-
+    
         if (!$instructor) {
             return response()->json(['error' => 'Unauthorized request'], 403);
         }
-
+    
         $requests = AttendanceRequest::where('instructor_id', $instructor->id)
-            ->with(['student', 'attendance'])
-            ->get();
-
+            ->with(['student.user', 'attendance']) 
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'student_id' => $request->student_id,
+                    'student_name' => ($request->student->user->first_name ?? 'N/A') . ' ' . 
+                                     ($request->student->user->last_name ?? ''), 
+                    'attendance_id' => $request->attendance_id,
+                    'course_id' => $request->course->id ?? null,
+                    'course_name' => $request->course->name ?? 'N/A',
+                    'request_date' => $request->request_date,
+                    'status' => $request->status,
+                ];
+            });
+    
         return response()->json([
             'requests' => $requests,
         ]);
