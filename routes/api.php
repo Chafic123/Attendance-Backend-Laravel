@@ -23,6 +23,7 @@ Route::prefix('auth')->group(function () {
     // Route::get('video', [VideoController::class, 'index'])->name('video.index');
     // Route::post('video/encode', [VideoController::class, 'store'])->name('video.encode');
 
+    Route::post('/submit-attendance', [MachineLearningController::class, 'submitAttendance']);
     Route::get('/upload-videos', [MachineLearningController::class, 'processVideos'])->name('student.video.upload');
     Route::post('/update-processed-status', [MachineLearningController::class, 'updateProcessedStatus'])->name('student.video.update');
 });

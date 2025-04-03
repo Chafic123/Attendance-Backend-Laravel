@@ -55,6 +55,39 @@ class MachineLearningController extends Controller
         return response()->json(['message' => 'Processing status updated successfully']);
     }
     
+    public function submitAttendance(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'session_id' => 'required|exists:course_sessions,id',
+        ]);
+    
+        try {
+            $existingAttendance = \App\Models\Attendance::where([
+                'student_id' => $request->student_id,
+                'course_session_id' => $request->session_id
+            ])->first();
+    
+            if ($existingAttendance) {
+                Log::warning("Duplicate attendance attempted: Student {$request->student_id}, Session {$request->session_id}");
+                return response()->json(['message' => 'Attendance already recorded'], 200);
+            }
+    
+            \App\Models\Attendance::create([
+                'course_session_id' => $request->session_id,
+                'student_id' => $request->student_id,
+                'is_present' => true,
+                'attended_at' => now(),
+            ]);
+    
+            Log::info("Attendance recorded: Student {$request->student_id}, Session {$request->session_id}");
+            return response()->json(['message' => 'Attendance recorded successfully']);
+    
+        } catch (\Exception $e) {
+            Log::error("Attendance error: " . $e->getMessage());
+            return response()->json(['error' => 'Failed to record attendance'], 500);
+        }
+    }
 
     public function index()
     {
