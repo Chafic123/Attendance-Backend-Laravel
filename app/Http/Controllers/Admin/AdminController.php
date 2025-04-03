@@ -495,6 +495,18 @@ class AdminController extends Controller
         return response()->json($calendarData);
     }
 
+    //delete a student from a specific course
+    public function deleteStudent($courseId, $studentId)
+    {
+        $course = Course::find($courseId);
+        $student = Student::find($studentId);
 
+        if (!$course || !$student) {
+            return response()->json(['error' => 'Course or student not found'], 404);
+        }
 
+        $course->students()->detach($studentId);
+
+        return response()->json(['message' => 'Student removed from course successfully']);
+    }
 }

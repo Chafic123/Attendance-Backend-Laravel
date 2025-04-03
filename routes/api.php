@@ -58,6 +58,9 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
         ->name('admin.enroll.instructor');
     Route::get('/students/{studentId}/courses/{courseId}', [AdminController::class, 'getStudentCalendar'])
         ->name('admin.student.course.calendar');
+    //deleet a student from a course
+    Route::delete('/courses/{courseId}/students/{studentId}', [AdminController::class, 'deleteStudent'])
+        ->name('admin.student.course.delete');
 });
 
 // Instructor Routes (Only Instructors Can Access)
