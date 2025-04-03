@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use App\Models\Department;
 use App\Models\Instructor;
 use App\Models\Admin;
+use App\Models\Attendance;
 
 class AdminController extends Controller
 {
@@ -331,7 +332,7 @@ class AdminController extends Controller
         return response()->json(['message' => 'Students enrolled successfully']);
     }
 
-    //Eneoll Instructor 
+    //Enroll Instructor 
     public function enrollInstructors(Request $request)
     {
         $request->validate([
@@ -355,8 +356,6 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Instructors enrolled successfully']);
     }
-
-
 
     // Edit Course
 
@@ -458,4 +457,44 @@ class AdminController extends Controller
             'sessions' => $enhancedSessions
         ]);
     }
+
+    public function getStudentCalendar($courseId, $studentId)
+    {
+        $today = Carbon::today()->startOfDay();
+
+        $sessions = CourseSession::where('course_id', $courseId)
+            ->orderBy('date')
+            ->get();
+
+        $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+            ->where('student_id', $studentId)
+            ->get()
+            ->keyBy('course_session_id');
+
+        $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
+            $sessionDate = Carbon::parse($session->date)->startOfDay();
+            $status = 'upcoming';
+            $attendanceId = null;
+
+            if ($sessionDate->lte($today)) {
+                if ($attendances->has($session->id)) {
+                    $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
+                    $attendanceId = $attendances[$session->id]->id;
+                } else {
+                    $status = 'absent';
+                }
+            }
+
+            return [
+                'id'     => $attendanceId,
+                'date'   => $session->date,
+                'status' => $status,
+            ];
+        });
+
+        return response()->json($calendarData);
+    }
+
+
+
 }

@@ -251,7 +251,6 @@ class InstructorController extends Controller
     }
 
 
-
     public function getCourseCalendar($courseId)
     {
         $course = Course::find($courseId);
@@ -285,6 +284,43 @@ class InstructorController extends Controller
             'has_current_day' => $enhancedSessions->contains('is_current_day', true),
             'sessions' => $enhancedSessions
         ]);
+    }
+
+    public function getStudentCalendar($courseId, $studentId)
+    {
+        $today = Carbon::today()->startOfDay();
+
+        $sessions = CourseSession::where('course_id', $courseId)
+            ->orderBy('date')
+            ->get();
+
+        $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+            ->where('student_id', $studentId)
+            ->get()
+            ->keyBy('course_session_id');
+
+        $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
+            $sessionDate = Carbon::parse($session->date)->startOfDay();
+            $status = 'upcoming';
+            $attendanceId = null;
+
+            if ($sessionDate->lte($today)) {
+                if ($attendances->has($session->id)) {
+                    $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
+                    $attendanceId = $attendances[$session->id]->id;
+                } else {
+                    $status = 'absent';
+                }
+            }
+
+            return [
+                'id'     => $attendanceId,
+                'date'   => $session->date,
+                'status' => $status,
+            ];
+        });
+
+        return response()->json($calendarData);
     }
     
 }
