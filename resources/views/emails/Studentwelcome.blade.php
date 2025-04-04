@@ -26,8 +26,6 @@
                 <p><strong>University Email:</strong> {{ $studentEmail }}</p>
                 <p><strong>Password:</strong> {{ $password }}</p>
                 {{-- department + major  --}}
-                <p><strong>Department:</strong> {{ $department }}</p>
-                <p><strong>Major:</strong> {{ $major }}</p>
             </div>
             <p>If you didn't request this account, please contact the administration.</p>
         </div>
