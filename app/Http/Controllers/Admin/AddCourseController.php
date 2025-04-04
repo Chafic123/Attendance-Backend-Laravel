@@ -14,7 +14,7 @@ class AddCourseController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
-            'Code' => 'required|string|unique:courses,Code,NULL,id,Section,' . $request->input('Section'),
+            'Code' => 'required|string',
             'Room' => 'required|string',
             'credit' => 'required|integer',
             'Section' => 'required|string',
@@ -23,23 +23,58 @@ class AddCourseController extends Controller
             'end_time' => 'required|string',
             'instructor_first_name' => 'required|string',
             'instructor_last_name' => 'required|string',
-            'instructor_email' => 'required|email|exists:users,email',
+            'instructor_email' => [
+                'required',
+                'email',
+                function ($value, $fail) {
+                    if (User::where('email', $value)->orWhere('personal_email', $value)->exists()) {
+                        $fail("Email already exists.");
+                    }
+                }
+            ],
         ]);
 
         $user = User::where('email', $validated['instructor_email'])->first();
-
-        // if (!$user || $user->first_name !== $validated['instructor_first_name'] || $user->last_name !== $validated['instructor_last_name']) {
-        //     dd($user);
-        //     return response()->json([
-        //         'message' => 'Instructor name and email do not match our records.'
-        //     ], 422);
-        // }
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'No instructor record found for the provided email.'
+            ], 422);
+        }
 
         $instructor = Instructor::where('user_id', $user->id)->first();
 
         if (!$instructor) {
             return response()->json([
                 'message' => 'No instructor record found for the provided email.'
+            ], 422);
+        }
+
+        $existingCourseSection = Course::where('Code', $validated['Code'])
+            ->where('Section', $validated['Section'])
+            ->exists();
+
+        if ($existingCourseSection) {
+            return response()->json([
+                'message' => 'A session with this course and section already exists.'
+            ], 422);
+        }
+
+        $existingCourse = Course::where('Room', $validated['Room'])
+            ->where('day_of_week', $validated['day_of_week'])
+            ->where(function ($query) use ($validated) {
+                $query->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
+                      ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']])
+                      ->orWhere(function ($q) use ($validated) {
+                          $q->where('start_time', '<=', $validated['start_time'])
+                            ->where('end_time', '>=', $validated['end_time']);
+                      });
+            })
+            ->exists();
+
+        if ($existingCourse) {
+            return response()->json([
+                'message' => 'Room is already busy during this time slot.'
             ], 422);
         }
 
