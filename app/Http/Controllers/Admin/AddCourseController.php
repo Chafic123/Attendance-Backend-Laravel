@@ -35,7 +35,7 @@ class AddCourseController extends Controller
         ]);
 
         $user = User::where('email', $validated['instructor_email'])->first();
-        
+
         if (!$user) {
             return response()->json([
                 'message' => 'No instructor record found for the provided email.'
@@ -64,11 +64,11 @@ class AddCourseController extends Controller
             ->where('day_of_week', $validated['day_of_week'])
             ->where(function ($query) use ($validated) {
                 $query->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhere(function ($q) use ($validated) {
-                          $q->where('start_time', '<=', $validated['start_time'])
+                    ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']])
+                    ->orWhere(function ($q) use ($validated) {
+                        $q->where('start_time', '<=', $validated['start_time'])
                             ->where('end_time', '>=', $validated['end_time']);
-                      });
+                    });
             })
             ->exists();
 

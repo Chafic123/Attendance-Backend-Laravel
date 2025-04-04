@@ -361,43 +361,66 @@ class AdminController extends Controller
 
     public function editCourse(Request $request, $courseId)
     {
+        $messages = [
+            'Code.unique' => 'A course session with this code and section already exists.',
+            'instructor_email.exists' => 'Instructor email not found in our records.',
+        ];
+    
         $validator = Validator::make($request->all(), [
             'Code' => [
                 'required',
                 'string',
-                'max:255',
-                Rule::unique('courses')->where(fn($query) => $query->where('Section', $request->section))
-                    ->ignore($courseId),
+                Rule::unique('courses')->where(function ($query) use ($request) {
+                    return $query->where('Section', $request->section);
+                })->ignore($courseId),
             ],
-            'section' => 'required|integer',
+            'section' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'instructor_email' => 'required|email|exists:users,email',
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
             'day_of_week' => 'required|string|max:255',
-            'room' => 'nullable|string|max:255',
+            'room' => 'required|string|max:255',
             'credits' => 'required|integer|min:1',
-        ]);
-
+        ], $messages);
+    
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
+    
         $course = Course::find($courseId);
         if (!$course) {
-            return response()->json(['message' => 'Course not found'], 404);
+            return response()->json(['message' => 'Course not found.'], 404);
         }
-
+    
+        // Check for room-time conflict (excluding the current course)
+        $conflict = Course::where('Room', $request->room)
+            ->where('day_of_week', $request->day_of_week)
+            ->where('id', '!=', $courseId)
+            ->where(function ($query) use ($request) {
+                $query->whereBetween('start_time', [$request->start_time, $request->end_time])
+                    ->orWhereBetween('end_time', [$request->start_time, $request->end_time])
+                    ->orWhere(function ($q) use ($request) {
+                        $q->where('start_time', '<=', $request->start_time)
+                            ->where('end_time', '>=', $request->end_time);
+                    });
+            })
+            ->first();
+    
+        if ($conflict) {
+            return response()->json([
+                'message' => 'Room is already busy at that time',
+                'conflict_with' => $conflict
+            ], 422);
+        }
+    
         $user = User::where('email', $request->instructor_email)->first();
-        if (!$user) {
-            return response()->json(['message' => 'User with this email not found'], 404);
-        }
-
         $instructor = Instructor::where('user_id', $user->id)->first();
+    
         if (!$instructor) {
-            return response()->json(['message' => 'Instructor not found for this user'], 404);
+            return response()->json(['message' => 'Instructor not found for this user.'], 404);
         }
-
+    
         $course->update([
             'Code' => $request->Code,
             'name' => $request->name,
@@ -406,13 +429,13 @@ class AdminController extends Controller
             'day_of_week' => $request->day_of_week,
             'Room' => $request->room,
             'Section' => $request->section,
-            'credits' => $request->credits,
+            'credit' => $request->credits,
         ]);
-
+    
         $course->instructors()->sync([$instructor->id]);
-
+    
         return response()->json([
-            'message' => 'Course updated successfully',
+            'message' => 'Course updated successfully.',
             'course' => $course,
             'instructor' => [
                 'email' => $user->email,
@@ -422,6 +445,7 @@ class AdminController extends Controller
             ]
         ], 200);
     }
+    
 
     public function getCourseCalendar($courseId)
     {
