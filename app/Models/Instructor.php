@@ -18,7 +18,6 @@ class Instructor extends Model
         'department_id',
         'phone_number',
         'image',
-        'personal_email',
     ];
     
     public function user()

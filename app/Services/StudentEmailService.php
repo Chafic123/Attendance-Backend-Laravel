@@ -7,7 +7,7 @@ use App\Models\Department;
 
 class StudentEmailService
 {
-    public static function generateEmail($firstName, $lastName, $departmentId, $domain = 'students.rhu.edu')
+    public static function generateEmail($firstName, $lastName, $departmentId, $domain = 'students.rhu.edu.lb')
     {
         $firstPart = strtolower(substr($firstName, 0, 4)); 
         $lastInitial = strtoupper(substr($lastName, 0, 1));

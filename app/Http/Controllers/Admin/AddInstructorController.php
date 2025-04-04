@@ -36,6 +36,7 @@ class AddInstructorController extends Controller
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'email' => $email,
+                'personal_email' => $validated['personal_email'],
                 'password' => $hashedPassword,
                 'status' => 'Instructor',
             ]);
@@ -44,7 +45,6 @@ class AddInstructorController extends Controller
                 'user_id' => $user->id,
                 'department_id' => $department->id,
                 'phone_number' => $validated['phone_number'],
-                'personal_email' => $validated['personal_email'],
             ]);
 
             $this->sendWelcomeEmail(
@@ -78,7 +78,7 @@ class AddInstructorController extends Controller
             'personal_email' => [
                 'required',
                 'email:rfc,dns',
-                'unique:instructors,personal_email',
+                'unique:users,personal_email',
                 'unique:users,email',
                 'max:255'
             ],

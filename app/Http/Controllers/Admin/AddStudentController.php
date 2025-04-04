@@ -37,6 +37,7 @@ class AddStudentController extends Controller
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'email' => $email,
+                'personal_email' => $validated['personal_email'],
                 'password' => $hashedPassword,
                 'status' => 'Student',
             ]);
@@ -46,7 +47,6 @@ class AddStudentController extends Controller
                 'department_id' => $department->id,
                 'address' => $validated['address'],
                 'phone_number' => $validated['phone_number'],
-                'personal_email' => $validated['personal_email'],
                 'major' => $validated['major'],
                 'processed_video' => false,
             ]);
@@ -86,7 +86,7 @@ class AddStudentController extends Controller
             'personal_email' => [
                 'required',
                 'email:rfc,dns',
-                'unique:students,personal_email',
+                'unique:users,personal_email',
                 'unique:users,email',
                 'max:255'
             ],
