@@ -12,6 +12,7 @@ use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Instructor\InstructorController;
 use App\Http\Controllers\MachineLearningController;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\Auth\PasswordResetController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('auth.login');
@@ -22,7 +23,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthenticatedSessionController::class, 'register'])->name('auth.register');
     // Route::get('video', [VideoController::class, 'index'])->name('video.index');
     // Route::post('video/encode', [VideoController::class, 'store'])->name('video.encode');
-
+    Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
     Route::post('/submit-attendance', [MachineLearningController::class, 'submitAttendance']);
     Route::get('/upload-videos', [MachineLearningController::class, 'processVideos'])->name('student.video.upload');
     Route::post('/update-processed-status', [MachineLearningController::class, 'updateProcessedStatus'])->name('student.video.update');
