@@ -3,15 +3,22 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Department;
 
 class StudentEmailService
 {
     public static function generateEmail($firstName, $lastName, $departmentId, $domain = 'students.rhu.edu.lb')
     {
-        $firstPart = strtolower(substr($firstName, 0, 4)); 
-        $lastInitial = strtoupper(substr($lastName, 0, 1));
+        $cleanFirstName = preg_replace('/[^a-zA-Z]/', '', $firstName);
+        $cleanLastName = preg_replace('/[^a-zA-Z]/', '', $lastName);
         
+        $firstPart = strtolower(substr($cleanFirstName, 0, 4)); 
+        $lastInitial = strtoupper(substr($cleanLastName, 0, 1));
+
+        // Ensure firstPart is at least 2 characters
+        if (strlen($firstPart) < 2) {
+            $firstPart .= 'x'; // Default extra character if needed
+        }
+
         $baseEmail = "{$firstPart}{$lastInitial}@{$domain}";
         $email = $baseEmail;
         
@@ -19,7 +26,7 @@ class StudentEmailService
         $additionalChars = 1;
 
         while (User::where('email', $email)->exists()) {
-            $extraChars = substr($lastName, 1, $additionalChars);
+            $extraChars = substr($cleanLastName, 1, $additionalChars);
             
             if (!empty($extraChars)) {
                 $email = "{$firstPart}{$lastInitial}" . strtolower($extraChars) . "@{$domain}";
@@ -28,10 +35,6 @@ class StudentEmailService
                 $email = "{$firstPart}{$lastInitial}{$count}@{$domain}";
                 $count++;
             }
-        }
-
-        if (strpos($email, '@') === false) {
-            $email .= "@{$domain}";
         }
 
         return $email;
