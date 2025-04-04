@@ -57,30 +57,27 @@ class MachineLearningController extends Controller
     
     public function submitAttendance(Request $request)
     {
-        $request->validate([
-            'student_id' => 'required|exists:students,id',
+        $validated = $request->validate([
             'session_id' => 'required|exists:course_sessions,id',
+            'attendance' => 'required|array',
+            'attendance.*.student_id' => 'required|exists:students,id',
+            'attendance.*.is_present' => 'required|boolean'
         ]);
     
         try {
-            $existingAttendance = \App\Models\Attendance::where([
-                'student_id' => $request->student_id,
-                'course_session_id' => $request->session_id
-            ])->first();
-    
-            if ($existingAttendance) {
-                Log::warning("Duplicate attendance attempted: Student {$request->student_id}, Session {$request->session_id}");
-                return response()->json(['message' => 'Attendance already recorded'], 200);
+            foreach ($validated['attendance'] as $record) {
+                \App\Models\Attendance::updateOrCreate(
+                    [
+                        'course_session_id' => $validated['session_id'],
+                        'student_id' => $record['student_id']
+                    ],
+                    [
+                        'is_present' => $record['is_present'],
+                        'attended_at' => $record['is_present'] ? now() : null
+                    ]
+                );
             }
     
-            \App\Models\Attendance::create([
-                'course_session_id' => $request->session_id,
-                'student_id' => $request->student_id,
-                'is_present' => true,
-                'attended_at' => now(),
-            ]);
-    
-            Log::info("Attendance recorded: Student {$request->student_id}, Session {$request->session_id}");
             return response()->json(['message' => 'Attendance recorded successfully']);
     
         } catch (\Exception $e) {
