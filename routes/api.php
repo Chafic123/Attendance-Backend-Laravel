@@ -37,6 +37,8 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::get('/courses/{courseId}/students', [AdminController::class, 'getAllAdminStudentsCourse'])
         ->name('admin.course.students');
     Route::get('/{courseId}/calender', [AdminController::class, 'getCourseCalendar']);
+    Route::get('/courses/{courseId}/{studentId}/attendance-report', [AdminController::class, 'generateAttendanceReport'])
+        ->name('admin.course.attendance.report');
 
     Route::post('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
     Route::post('/Addcourse', [AddCourseController::class, 'store'])->name('admin.course.add');
@@ -79,11 +81,13 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
     Route::get('/user', [InstructorController::class, 'getAuthenticatedStudent'])->name('Instructor.user');
     Route::get('/courses/{courseId}/calendar', [InstructorController::class, 'getCourseCalendar'])
         ->name('instructor.course.calendar');
-        Route::get('/students/{studentId}/courses/{courseId}', [InstructorController::class, 'getStudentCalendar'])
+    Route::get('/students/{studentId}/courses/{courseId}', [InstructorController::class, 'getStudentCalendar'])
         ->name('instructor.student.course.calendar');
-        Route::get('requests', [InstructorController::class, 'getRequestsForInstructor']);
+    Route::get('requests', [InstructorController::class, 'getRequestsForInstructor']);
     Route::post('/requests/{requestId}/update-status', [InstructorController::class, 'updateRequestStatus'])
         ->name('instructor.request.update.status');
+    Route::get('/download-schedule-report', [InstructorController::class, 'downloadScheduleReport'])
+        ->name('instructor.schedule.report.download');
 });
 
 // Student Routes (Only Students Can Access)
@@ -108,4 +112,7 @@ Route::middleware(['auth:sanctum', 'role:Student'])->prefix('student')->group(fu
         ->name('student.image.delete');
     Route::delete('/{studentId}/delete-video', [StudentController::class, 'deleteStudentVideo'])
         ->name('student.video.delete');
+
+    Route::get('/download-schedule-report', [StudentController::class, 'downloadScheduleReport'])
+        ->name('student.schedule.report.download');
 });

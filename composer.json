@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "barryvdh/laravel-dompdf": "^3.1",
         "cloudinary-labs/cloudinary-laravel": "^3.0",
         "cloudinary/cloudinary_php": "^3.1",
         "laravel/breeze": "^2.3",

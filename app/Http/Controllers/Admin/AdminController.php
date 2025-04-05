@@ -393,7 +393,7 @@ class AdminController extends Controller
             return response()->json(['message' => 'Course not found.'], 404);
         }
     
-        // Check for room-time conflict (excluding the current course)
+        // Check for room-time conflict (exc-luding the current course)
         $conflict = Course::where('Room', $request->room)
             ->where('day_of_week', $request->day_of_week)
             ->where('id', '!=', $courseId)
@@ -406,7 +406,7 @@ class AdminController extends Controller
                     });
             })
             ->first();
-    
+
         if ($conflict) {
             return response()->json([
                 'message' => 'Room is already busy at that time',
@@ -532,5 +532,31 @@ class AdminController extends Controller
         $course->students()->detach($studentId);
 
         return response()->json(['message' => 'Student removed from course successfully']);
+    }
+
+    //generate a report for a specific student attendance 
+    public function generateAttendanceReport($courseId, $studentId)
+    {
+        $course = Course::find($courseId);
+        $student = Student::find($studentId);
+
+        if (!$course || !$student) {
+            return response()->json(['error' => 'Course or student not found'], 404);
+        }
+        $sessions = CourseSession::where('course_id', $courseId)->get();
+        $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+            ->where('student_id', $studentId)
+            ->get()
+            ->keyBy('course_session_id');
+
+        $sessions->map(function ($session) use ($attendances) {
+            dd($attendances);
+            $attendance = $attendances->get($session->id);
+            return [
+                'date' => $session->date,
+                'status' => $attendance ? ($attendance->is_present ? 'Present' : 'Absent') : 'Absent',
+                'attendance_id' => $attendance ? $attendance->id : null,
+            ];
+        });
     }
 }
