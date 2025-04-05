@@ -529,38 +529,76 @@ class StudentController extends Controller
         }
     }
 
-    public function deleteStudentVideo(Request $request)
-    {
-        $student = Auth::user()->student;
+    public function deleteStudentVideo()
+{
+    $student = Auth::user()->student;
 
-        if (!$student) {
-            return response()->json(['error' => 'Student not found'], 404);
-        }
-
-        $cloudinary = new Cloudinary();
-        $cloudinary = new Cloudinary([
-            'cloud' => [
-                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
-                'api_key' => env('CLOUDINARY_API_KEY'),
-                'api_secret' => env('CLOUDINARY_API_SECRET'),
-            ],
-        ]);
-
-        try {
-            if ($student->video) {
-                $videoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
-                $cloudinary->uploadApi()->destroy($videoPublicId);
-                $student->video = null;
-                $student->save();
-            }
-
-            return response()->json([
-                'message' => 'Student video deleted successfully.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to delete video: ' . $e->getMessage()], 500);
-        }
+    if (!$student) {
+        return response()->json(['error' => 'Student not found'], 404);
     }
+
+    $cloudinary = new Cloudinary();
+    $cloudinary = new Cloudinary([
+        'cloud' => [
+            'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+            'api_key' => env('CLOUDINARY_API_KEY'),
+            'api_secret' => env('CLOUDINARY_API_SECRET'),
+        ],
+    ]);
+
+    try {
+        if ($student->video) {
+            // Extracting the public ID from the video URL
+            $videoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
+            
+            // Destroying the video on Cloudinary
+            $cloudinary->uploadApi()->destroy($videoPublicId);
+            
+            $student->video = null;
+            $student->save();
+        }
+
+        return response()->json([
+            'message' => 'Student video deleted successfully.',
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to delete video: ' . $e->getMessage()], 500);
+    }
+}
+
+
+    // public function deleteStudentVideo(Request $request)
+    // {
+    //     $student = Auth::user()->student;
+
+    //     if (!$student) {
+    //         return response()->json(['error' => 'Student not found'], 404);
+    //     }
+
+    //     $cloudinary = new Cloudinary();
+    //     $cloudinary = new Cloudinary([
+    //         'cloud' => [
+    //             'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+    //             'api_key' => env('CLOUDINARY_API_KEY'),
+    //             'api_secret' => env('CLOUDINARY_API_SECRET'),
+    //         ],
+    //     ]);
+
+    //     try {
+    //         if ($student->video) {
+    //             $videoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
+    //             $cloudinary->uploadApi()->destroy($videoPublicId);
+    //             $student->video = null;
+    //             $student->save();
+    //         }
+
+    //         return response()->json([
+    //             'message' => 'Student video deleted successfully.',
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Failed to delete video: ' . $e->getMessage()], 500);
+    //     }
+    // }
 
     //generate schedule report 
     public function downloadScheduleReport()
