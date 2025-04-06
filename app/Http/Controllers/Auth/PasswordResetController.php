@@ -26,7 +26,7 @@ class PasswordResetController extends Controller
         }
 
         $newPassword = PasswordService::generateTemporaryPassword();
-        $hashedPassword = Hash::make($newPassword);
+        $hashedPassword = $newPassword;
 
         $user->update(['password' => $hashedPassword]);
 
