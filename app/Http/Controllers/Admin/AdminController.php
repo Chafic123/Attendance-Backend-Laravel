@@ -498,7 +498,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function getStudentCalendar($courseId, $studentId)
+    public function getStudentCalendar($studentId, $courseId)
     {
         $today = Carbon::today()->startOfDay();
 
