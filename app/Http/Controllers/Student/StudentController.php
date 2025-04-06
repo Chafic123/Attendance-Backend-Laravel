@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Cloudinary\Cloudinary;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -409,41 +410,51 @@ class StudentController extends Controller
 
     //tester
     public function getStudentCalendar($courseId, $studentId)
-    {
-        $today = Carbon::today()->startOfDay();
+{
+    $isEnrolled = DB::table('course_student')
+        ->where('course_id', $courseId)
+        ->where('student_id', $studentId)
+        ->exists();
 
-        $sessions = CourseSession::where('course_id', $courseId)
-            ->orderBy('date')
-            ->get();
-
-        $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
-            ->where('student_id', $studentId)
-            ->get()
-            ->keyBy('course_session_id');
-
-        $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
-            $sessionDate = Carbon::parse($session->date)->startOfDay();
-            $status = 'upcoming';
-            $attendanceId = null;
-
-            if ($sessionDate->lte($today)) {
-                if ($attendances->has($session->id)) {
-                    $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
-                    $attendanceId = $attendances[$session->id]->id;
-                } else {
-                    $status = 'absent';
-                }
-            }
-
-            return [
-                'id'     => $attendanceId,
-                'date'   => $session->date,
-                'status' => $status,
-            ];
-        });
-
-        return response()->json($calendarData);
+    if (!$isEnrolled) {
+        return response()->json(['message' => 'Student not enrolled in this course.'], 403);
     }
+
+    $today = Carbon::today()->startOfDay();
+
+    $sessions = CourseSession::where('course_id', $courseId)
+        ->orderBy('date')
+        ->get();
+
+    $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+        ->where('student_id', $studentId)
+        ->get()
+        ->keyBy('course_session_id');
+
+    $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
+        $sessionDate = Carbon::parse($session->date)->startOfDay();
+        $status = 'upcoming';
+        $attendanceId = null;
+
+        if ($sessionDate->lte($today)) {
+            if ($attendances->has($session->id)) {
+                $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
+                $attendanceId = $attendances[$session->id]->id;
+            } else {
+                $status = 'absent';
+            }
+        }
+
+        return [
+            'id'     => $attendanceId,
+            'date'   => $session->date,
+            'status' => $status,
+        ];
+    });
+
+    return response()->json($calendarData);
+}
+
 
     // request correction 
 

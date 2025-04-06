@@ -160,7 +160,7 @@ class AdminController extends Controller
     }
 
     //delete student from course 
-    
+
     public function deleteStudentFromCourse($courseId, $studentId)
     {
         $course = Course::find($courseId);
@@ -500,6 +500,17 @@ class AdminController extends Controller
 
     public function getStudentCalendar($courseId, $studentId)
     {
+        $today = Carbon::today()->startOfDay();
+
+        $isEnrolled = DB::table('course_student')
+            ->where('course_id', $courseId)
+            ->where('student_id', $studentId)
+            ->exists();
+
+        if (!$isEnrolled) {
+            return response()->json(['message' => 'Student not enrolled in this course.'], 403);
+        }
+
         $today = Carbon::today()->startOfDay();
 
         $sessions = CourseSession::where('course_id', $courseId)

@@ -267,7 +267,6 @@ class InstructorController extends Controller
         ]);
     }
 
-
     public function getAuthenticatedStudent(Request $request)
     {
         $user = $request->user();
