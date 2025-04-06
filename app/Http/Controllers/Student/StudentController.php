@@ -311,8 +311,6 @@ class StudentController extends Controller
         ]);
     }
 
-
-
     public function getScheduleReportForLoggedInStudent()
     {
         $student = Auth::user()->student;
@@ -376,7 +374,6 @@ class StudentController extends Controller
     }
 
     //calender
-
 
     //original
     // public function getStudentCalendar($courseId, $studentId)
@@ -448,7 +445,6 @@ class StudentController extends Controller
         return response()->json($calendarData);
     }
 
-
     // request correction 
 
     public function requestCorrection(Request $request, $attendanceId)
@@ -495,7 +491,6 @@ class StudentController extends Controller
         return response()->json(['message' => 'Correction request submitted successfully']);
     }
 
-
     public function deleteStudentImage()
     {
         $student = Auth::user()->student;
@@ -530,42 +525,41 @@ class StudentController extends Controller
     }
 
     public function deleteStudentVideo()
-{
-    $student = Auth::user()->student;
+    {
+        $student = Auth::user()->student;
 
-    if (!$student) {
-        return response()->json(['error' => 'Student not found'], 404);
-    }
-
-    $cloudinary = new Cloudinary();
-    $cloudinary = new Cloudinary([
-        'cloud' => [
-            'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
-            'api_key' => env('CLOUDINARY_API_KEY'),
-            'api_secret' => env('CLOUDINARY_API_SECRET'),
-        ],
-    ]);
-
-    try {
-        if ($student->video) {
-            // Extracting the public ID from the video URL
-            $videoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
-            
-            // Destroying the video on Cloudinary
-            $cloudinary->uploadApi()->destroy($videoPublicId);
-            
-            $student->video = null;
-            $student->save();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
         }
 
-        return response()->json([
-            'message' => 'Student video deleted successfully.',
+        $cloudinary = new Cloudinary();
+        $cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key' => env('CLOUDINARY_API_KEY'),
+                'api_secret' => env('CLOUDINARY_API_SECRET'),
+            ],
         ]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Failed to delete video: ' . $e->getMessage()], 500);
-    }
-}
 
+        try {
+            if ($student->video) {
+                // Extracting the public ID from the video URL
+                $videoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
+
+                // Destroying the video on Cloudinary
+                $cloudinary->uploadApi()->destroy($videoPublicId);
+
+                $student->video = null;
+                $student->save();
+            }
+
+            return response()->json([
+                'message' => 'Student video deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete video: ' . $e->getMessage()], 500);
+        }
+    }
 
     // public function deleteStudentVideo(Request $request)
     // {
@@ -604,18 +598,18 @@ class StudentController extends Controller
     public function downloadScheduleReport()
     {
         $student = Auth::user()->student;
-    
+
         if (!$student) {
             return response()->json(['error' => 'Student not logged in'], 401);
         }
-    
+
         $scheduleReport = $student->courses()
             ->with([
                 'terms',
                 'instructors.user:id,first_name,last_name',
             ])
             ->get();
-    
+
         $studentData = [
             'student_id' => $student->student_id,
             'first_name' => $student->user->first_name,
@@ -625,7 +619,7 @@ class StudentController extends Controller
             'phone' => $student->phone_number,
             'major' => $student->major,
         ];
-    
+
         $coursesData = $scheduleReport->map(function ($course) {
             return [
                 'course_name' => $course->name,
@@ -648,13 +642,12 @@ class StudentController extends Controller
                 }),
             ];
         });
-    
+
         $pdf = Pdf::loadView('reports.StudentSchedule', [
             'student' => $studentData,
             'courses' => $coursesData,
         ])->setPaper('a4', 'landscape'); // <-- Wider layout
-    
+
         return $pdf->download('schedule_report.pdf');
     }
-    
 }

@@ -77,7 +77,6 @@ class InstructorController extends Controller
     }
 
     // Update request correction 
-
     public function updateRequestStatus(Request $request, $requestId)
     {
         $instructor = Auth::user()->instructor;
@@ -271,18 +270,17 @@ class InstructorController extends Controller
     }
 
     // report 
-
     public function downloadScheduleReport()
     {
         $instructor = Auth::user()->instructor;
-    
+
         if (!$instructor) {
             return response()->json(['error' => 'Instructor not logged in'], 401);
         }
-    
+
         $scheduleReport = $instructor->courses()
             ->with(['terms'])->get();
-    
+
         $instructorData = [
             'instructor_id' => $instructor->id,
             'first_name' => $instructor->user->first_name,
@@ -291,7 +289,7 @@ class InstructorController extends Controller
             'email' => $instructor->user->email,
             'phone' => $instructor->phone_number,
         ];
-    
+
         $coursesData = $scheduleReport->map(function ($course) {
             $term = $course->terms->first();
             return [
@@ -307,16 +305,14 @@ class InstructorController extends Controller
                 'year' => $term ? $term->year : 'N/A',
             ];
         });
-    
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.InstructorSchedule', [
             'instructor' => $instructorData,
             'courses' => $coursesData,
         ])->setPaper('a4', 'portrait'); // Set to A4 paper in portrait mode
-    
+
         return $pdf->download('instructor_schedule.pdf');
     }
-    
-
 
     public function getCourseCalendar($courseId)
     {

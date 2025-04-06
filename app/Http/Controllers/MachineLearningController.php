@@ -37,24 +37,24 @@ class MachineLearningController extends Controller
             'student_id' => 'required|exists:students,id',
             'processed' => 'required|in:0,1',
         ]);
-    
+
         Log::info("Incoming data: ", $request->all());
-    
+
         $student = Student::find($request->student_id);
         if (!$student) {
             Log::error("Student not found with ID: " . $request->student_id);
             return response()->json(['error' => 'Student not found'], 404);
         }
-    
+
         Log::info("Updating student: " . $student->id);
-        $student->processed_video = (string) $request->processed;  
+        $student->processed_video = (string) $request->processed;
         $student->save();
-    
+
         Log::info("Student ID {$student->id} video processing status updated to: {$student->processed_video}");
-    
+
         return response()->json(['message' => 'Processing status updated successfully']);
     }
-    
+
     public function submitAttendance(Request $request)
     {
         $validated = $request->validate([
@@ -63,7 +63,7 @@ class MachineLearningController extends Controller
             'attendance.*.student_id' => 'required|exists:students,id',
             'attendance.*.is_present' => 'required|boolean'
         ]);
-    
+
         try {
             foreach ($validated['attendance'] as $record) {
                 \App\Models\Attendance::updateOrCreate(
@@ -77,9 +77,8 @@ class MachineLearningController extends Controller
                     ]
                 );
             }
-    
+
             return response()->json(['message' => 'Attendance recorded successfully']);
-    
         } catch (\Exception $e) {
             Log::error("Attendance error: " . $e->getMessage());
             return response()->json(['error' => 'Failed to record attendance'], 500);

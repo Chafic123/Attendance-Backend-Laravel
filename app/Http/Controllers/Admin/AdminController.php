@@ -365,7 +365,7 @@ class AdminController extends Controller
             'Code.unique' => 'A course session with this code and section already exists.',
             'instructor_email.exists' => 'Instructor email not found in our records.',
         ];
-    
+
         $validator = Validator::make($request->all(), [
             'Code' => [
                 'required',
@@ -383,16 +383,16 @@ class AdminController extends Controller
             'room' => 'required|string|max:255',
             'credits' => 'required|integer|min:1',
         ], $messages);
-    
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-    
+
         $course = Course::find($courseId);
         if (!$course) {
             return response()->json(['message' => 'Course not found.'], 404);
         }
-    
+
         // Check for room-time conflict (exc-luding the current course)
         $conflict = Course::where('Room', $request->room)
             ->where('day_of_week', $request->day_of_week)
@@ -413,14 +413,14 @@ class AdminController extends Controller
                 'conflict_with' => $conflict
             ], 422);
         }
-    
+
         $user = User::where('email', $request->instructor_email)->first();
         $instructor = Instructor::where('user_id', $user->id)->first();
-    
+
         if (!$instructor) {
             return response()->json(['message' => 'Instructor not found for this user.'], 404);
         }
-    
+
         $course->update([
             'Code' => $request->Code,
             'name' => $request->name,
@@ -431,9 +431,9 @@ class AdminController extends Controller
             'Section' => $request->section,
             'credit' => $request->credits,
         ]);
-    
+
         $course->instructors()->sync([$instructor->id]);
-    
+
         return response()->json([
             'message' => 'Course updated successfully.',
             'course' => $course,
@@ -445,7 +445,6 @@ class AdminController extends Controller
             ]
         ], 200);
     }
-    
 
     public function getCourseCalendar($courseId)
     {
