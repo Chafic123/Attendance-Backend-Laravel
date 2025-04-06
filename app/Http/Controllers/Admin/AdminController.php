@@ -107,22 +107,36 @@ class AdminController extends Controller
 
         $students = $course->students()->with('user:id,first_name,last_name,email')->get();
 
-        $students = $students->map(function ($student) {
+        $students = $students->map(function ($student) use ($course) {
+            $attendanceRecords = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                })
+                ->get();
+
+            $absentCount = $attendanceRecords->where('is_present', false)->count();
+            $absencePercentage = round($absentCount * 3.33, 2); 
+
+            $status = $absencePercentage >= 25 ? 'At risk of drop' : 'Safe';
+
             return [
-                'id'         => $student->id,
-                'user_id'    => $student->user_id,
-                'student_id' => $student->student_id,
-                'first_name' => optional($student->user)->first_name,
-                'last_name'  => optional($student->user)->last_name,
-                'email'      => optional($student->user)->email,
-                'department' => optional($student->department)->name,
-                'major'      => $student->major,
-                'image'      => $student->image,
+                'id'               => $student->id,
+                'user_id'          => $student->user_id,
+                'student_id'       => $student->student_id,
+                'first_name'       => optional($student->user)->first_name,
+                'last_name'        => optional($student->user)->last_name,
+                'email'            => optional($student->user)->email,
+                'department'       => optional($student->department)->name,
+                'major'            => $student->major,
+                'image'            => $student->image,
+                'absence_percentage' => $absencePercentage . '%', 
+                'status'           => $status, 
             ];
         });
 
         return response()->json($students);
     }
+
 
 
     /**
@@ -140,24 +154,42 @@ class AdminController extends Controller
             $query->select('users.id', 'users.first_name', 'users.last_name');
         }])->get();
 
-        $coursesWithInstructors = $courses->map(function ($course) {
-            $instructors = $course->instructors->map(function ($instructor) {
+        $coursesWithInstructors = $courses->map(function ($course) use ($student) {
+            $attendanceRecords = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                })
+                ->get();
+
+            $attendanceData = $attendanceRecords->map(function ($attendance) {
                 return [
-                    'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name
+                    'date' => $attendance->course_session->session_date,
+                    'is_present' => $attendance->is_present,
                 ];
             });
+
+            $absentCount = $attendanceRecords->where('is_present', false)->count();
+            $absencePercentage = round($absentCount * 3.33, 2);
+
+            $status = $absencePercentage >= 25 ? 'At risk of drop' : 'Safe';
 
             return [
                 'id' => $course->id,
                 'course_code' => $course->Code,
                 'course_name' => $course->name,
                 'section' => $course->Section,
-                'instructors' => $instructors,
-            ];
+                'instructors' => $course->instructors->map(function ($instructor) {
+                    return [
+                        'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name
+                    ];
+                }),
+                'absence_percentage' => $absencePercentage . '%',
+                'status' => $status,            ];
         });
 
         return response()->json($coursesWithInstructors);
     }
+
 
     //delete student from course 
 
