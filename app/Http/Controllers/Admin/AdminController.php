@@ -148,6 +148,7 @@ class AdminController extends Controller
             });
 
             return [
+                'id' => $course->id,
                 'course_code' => $course->Code,
                 'course_name' => $course->name,
                 'section' => $course->Section,
@@ -156,6 +157,22 @@ class AdminController extends Controller
         });
 
         return response()->json($coursesWithInstructors);
+    }
+
+    //delete student from course 
+    
+    public function deleteStudentFromCourse($courseId, $studentId)
+    {
+        $course = Course::find($courseId);
+        $student = Student::find($studentId);
+
+        if (!$course || !$student) {
+            return response()->json(['error' => 'Course or student not found'], 404);
+        }
+
+        $course->students()->detach($studentId);
+
+        return response()->json(['message' => 'Student removed from course successfully']);
     }
 
     /**

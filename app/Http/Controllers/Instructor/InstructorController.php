@@ -36,6 +36,7 @@ class InstructorController extends Controller
         $coursesData = [];
         foreach ($courses as $course) {
             $coursesData[] = [
+                'name' => $user->first_name . ' ' . $user->last_name,
                 'course_id' => $course->course_id,
                 'course_name' => $course->name,
                 'course_section' => $course->Section,
