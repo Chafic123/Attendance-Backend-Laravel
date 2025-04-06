@@ -324,6 +324,46 @@ class InstructorController extends Controller
         return $pdf->download('instructor_schedule.pdf');
     }
 
+    public function getScheduleReportForLoggedInInstructor()
+    {
+        $instructor = Auth::user()->instructor;
+        if (!$instructor) {
+            return response()->json(['error' => 'Instructor not logged in'], 401);
+        }
+        $scheduleReport = $instructor->courses()
+            ->with([
+                'terms',
+            ])->get();
+        $response = [
+            'instructor' => [
+                'instructor_id' => $instructor->id,
+                'first_name' => $instructor->user->first_name,
+                'last_name' => $instructor->user->last_name,
+                'department' => $instructor->department->name ?? null,
+                'email' => $instructor->user->email,
+                'phone' => $instructor->phone_number,
+            ],
+            'courses' => $scheduleReport->map(function ($course) {
+                $term = $course->terms->first();
+                return [
+                    'course_id' => $course->id,
+                    'course_name' => $course->name,
+                    'course_code' => $course->Code ?? 'N/A',
+                    'credits' => $course->credits ?? 'N/A',
+                    'room_name' => $course->Room ?? 'N/A',
+                    'day_of_week' => $course->day_of_week ? str_split($course->day_of_week) : [],
+                    'section_name' => $course->Section ?? 'N/A',
+                    'time_start' => $course->start_time,
+                    'time_end' => $course->end_time,
+                    'term' => $term ? $term->name : 'N/A',
+                    'year' => $term ? $term->year : 'N/A',
+                ];
+            }),
+            'total_courses' => $scheduleReport->count(),
+        ];
+        return response()->json($response);
+    }
+
     public function getCourseCalendar($courseId)
     {
         $course = Course::find($courseId);
