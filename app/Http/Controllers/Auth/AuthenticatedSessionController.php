@@ -21,7 +21,7 @@ class AuthenticatedSessionController extends Controller
     {
         $request->validate([
             'identifier' => 'required|string|max:255',
-            'password' => 'required|string|',
+            'password' => 'required|string',
             'remember_me' => 'boolean',
         ]);
 

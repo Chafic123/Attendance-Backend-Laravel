@@ -126,9 +126,15 @@ class InstructorController extends Controller
 
             $totalSessions = $attendanceRecords->count();
             $presentCount = $attendanceRecords->where('is_present', true)->count();
+            $absentCount = $totalSessions - $presentCount;
+
             $attendancePercentage = $totalSessions > 0
                 ? round(($presentCount / $totalSessions) * 100, 2)
                 : 0;
+
+            $absencePercentage = round(100 - $attendancePercentage, 2);
+
+            $status = $attendancePercentage < 75 ? 'At risk of drop' : 'Safe';
 
             $studentsWithAttendance[] = [
                 'student_id' => $student->id,
@@ -138,12 +144,16 @@ class InstructorController extends Controller
                 'major' => $student->major,
                 'image' => $student->image,
                 'video' => $student->video,
-                'attendance_percentage' => $attendancePercentage
+                'attendance_percentage' => $attendancePercentage,
+                'absence_percentage' => $absencePercentage,
+                'absent_count' => $absentCount,
+                'status' => $status
             ];
         }
 
         return $returnJson ? response()->json($studentsWithAttendance) : $studentsWithAttendance;
     }
+
 
     public function sendNotification(Request $request)
     {

@@ -31,7 +31,7 @@ class AddStudentController extends Controller
             );
 
             $plainPassword = PasswordService::generateTemporaryPassword();
-            $hashedPassword = Hash::make($plainPassword);
+            $hashedPassword = $plainPassword;
 
             $user = User::create([
                 'first_name' => $validated['first_name'],

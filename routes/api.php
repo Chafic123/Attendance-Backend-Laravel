@@ -80,9 +80,10 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
     Route::get('/user', [InstructorController::class, 'getAuthenticatedStudent'])->name('Instructor.user');
     Route::get('/courses/{courseId}/calendar', [InstructorController::class, 'getCourseCalendar'])
         ->name('instructor.course.calendar');
-    Route::get('/students/{studentId}/courses/{courseId}', [InstructorController::class, 'getStudentCalendar'])
+    Route::get('/students/{studentId}/courses/{courseId}/calender', [InstructorController::class, 'getStudentCalendar'])
         ->name('instructor.student.course.calendar');
-    Route::get('requests', [InstructorController::class, 'getRequestsForInstructor']);
+    Route::get('requests', [InstructorController::class, 'getRequestsForInstructor'])
+        ->name('instructor.requests');
     Route::post('/requests/{requestId}/update-status', [InstructorController::class, 'updateRequestStatus'])
         ->name('instructor.request.update.status');
     Route::get('/download-schedule-report', [InstructorController::class, 'downloadScheduleReport'])
