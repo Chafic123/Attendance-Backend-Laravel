@@ -69,6 +69,8 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     //delete instructor
     Route::delete('/instructors/{instructorId}', [AdminController::class, 'deleteInstructor'])
         ->name('admin.instructor.delete');
+    Route::get('/courses/{courseId}/attendance-report', [AdminController::class, 'downloadCourseAttendanceReport'])
+        ->name('admin.course.attendance.report.download');
     
 });
 

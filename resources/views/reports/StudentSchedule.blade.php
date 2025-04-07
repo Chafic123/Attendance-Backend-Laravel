@@ -73,6 +73,11 @@
             font-size: 15px;
             color: #999;
         }
+
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
     </style>
 </head>
 <body>

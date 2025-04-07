@@ -134,7 +134,7 @@ class InstructorController extends Controller
 
             $absencePercentage = round(100 - $attendancePercentage, 2);
 
-            $status = $attendancePercentage < 75 ? 'At risk of drop' : 'Safe';
+            $status = $attendancePercentage < 75 ? 'Drop risk' : 'Safe';
 
             $studentsWithAttendance[] = [
                 'student_id' => $student->id,
@@ -319,7 +319,7 @@ class InstructorController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.InstructorSchedule', [
             'instructor' => $instructorData,
             'courses' => $coursesData,
-        ])->setPaper('a4', 'portrait'); // Set to A4 paper in portrait mode
+        ])->setPaper('a4', 'portrait'); 
 
         return $pdf->download('instructor_schedule.pdf');
     }

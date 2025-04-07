@@ -44,7 +44,7 @@ class StudentController extends Controller
 
             $absencePercentage = round($absentCount * 3.33, 2);
 
-            $status = $absencePercentage >= 25 ? 'At risk of drop' : 'Safe';
+            $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
 
             return [
                 'course_id' => $course->id,

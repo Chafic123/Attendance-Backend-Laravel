@@ -17,6 +17,7 @@ use App\Models\Department;
 use App\Models\Instructor;
 use App\Models\Admin;
 use App\Models\Attendance;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminController extends Controller
 {
@@ -115,9 +116,9 @@ class AdminController extends Controller
                 ->get();
 
             $absentCount = $attendanceRecords->where('is_present', false)->count();
-            $absencePercentage = round($absentCount * 3.33, 2); 
+            $absencePercentage = round($absentCount * 3.33, 2);
 
-            $status = $absencePercentage >= 25 ? 'At risk of drop' : 'Safe';
+            $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
 
             return [
                 'id'               => $student->id,
@@ -129,8 +130,8 @@ class AdminController extends Controller
                 'department'       => optional($student->department)->name,
                 'major'            => $student->major,
                 'image'            => $student->image,
-                'absence_percentage' => $absencePercentage . '%', 
-                'status'           => $status, 
+                'absence_percentage' => $absencePercentage . '%',
+                'status'           => $status,
             ];
         });
 
@@ -184,7 +185,8 @@ class AdminController extends Controller
                     ];
                 }),
                 'absence_percentage' => $absencePercentage . '%',
-                'status' => $status,            ];
+                'status' => $status,
+            ];
         });
 
         return response()->json($coursesWithInstructors);
@@ -341,19 +343,19 @@ class AdminController extends Controller
     public function deleteInstructor($instructorId)
     {
         $instructor = Instructor::find($instructorId);
-        
+
         if (!$instructor) {
             return response()->json(['message' => 'Instructor not found'], 404);
         }
-    
+
         $instructor->delete();
-    
+
         $user = User::find($instructor->user_id);
-        
+
         if ($user) {
             $user->delete();
         }
-    
+
         return response()->json(['message' => 'Instructor deleted successfully']);
     }
 
@@ -657,4 +659,61 @@ class AdminController extends Controller
             ];
         });
     }
+
+    // Attendance report for students in course
+
+    public function downloadCourseAttendanceReport($courseId)
+    {
+        $course = Course::with([
+            'students.user',
+            'students.department',
+            'instructors.user',
+        ])->find($courseId);
+    
+        if (!$course) {
+            return response()->json(['error' => 'Course not found'], 404);
+        }
+    
+        $students = $course->students;
+        $instructor = $course->instructors->first(); 
+    
+        $reportData = [];
+        $totalAbsencePercentage = 0;
+    
+        foreach ($students as $student) {
+            $attendanceRecords = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                })
+                ->get();
+    
+            $absentCount = $attendanceRecords->where('is_present', false)->count();
+
+            $absencePercentage = round($absentCount * 3.33, 2);
+            $totalAbsencePercentage += $absencePercentage;
+    
+            $reportData[] = [
+                'student_id' => $student->student_id,
+                'first_name' => optional($student->user)->first_name,
+                'last_name' => optional($student->user)->last_name,
+                'email' => optional($student->user)->email,
+                'department' => optional($student->department)->name ?? 'N/A',
+                'major' => $student->major,
+                'absence_percentage' => $absencePercentage,
+                'status' => $absencePercentage >= 25 ? 'Drop Risk' : 'Safe',
+            ];
+        }
+    
+        $averageAbsence = count($students) ? round($totalAbsencePercentage / count($students), 2) : 0;
+    
+        return Pdf::loadView('reports.CourseAttendanceReport', [
+            'course' => $course,
+            'instructor' => $instructor, 
+            'students' => $reportData,
+            'averageAbsence' => $averageAbsence,
+            'session' => $course->course_sessions->first(),
+        ])->setPaper('A4', 'portrait')
+          ->download("attendance_report_{$course->Code}.pdf");
+    }
+    
 }

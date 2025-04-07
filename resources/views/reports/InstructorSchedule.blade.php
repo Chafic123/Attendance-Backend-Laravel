@@ -65,6 +65,10 @@
             text-align: center;
             color: #555;
         }
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
