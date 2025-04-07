@@ -61,8 +61,15 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
         ->name('admin.enroll.instructor');
     Route::get('/students/{studentId}/courses/{courseId}', [AdminController::class, 'getStudentCalendar'])
         ->name('admin.student.course.calendar');
-    Route::delete('/courses/{courseId}/students/{studentId}', [AdminController::class, 'deleteStudent'])
+    Route::delete('/courses/{courseId}/students/{studentId}', [AdminController::class, 'deleteStudentCourse'])
         ->name('admin.student.course.delete');
+    //delete student
+    Route::delete('/students/{studentId}', [AdminController::class, 'deleteStudent'])
+        ->name('admin.student.delete');
+    //delete instructor
+    Route::delete('/instructors/{instructorId}', [AdminController::class, 'deleteInstructor'])
+        ->name('admin.instructor.delete');
+    
 });
 
 // Instructor Routes (Only Instructors Can Access)
@@ -88,6 +95,8 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
         ->name('instructor.request.update.status');
     Route::get('/download-schedule-report', [InstructorController::class, 'downloadScheduleReport'])
         ->name('instructor.schedule.report.download');
+    Route::get('/notifications-read', [InstructorController::class, 'notificationsRead'])
+        ->name('instructor.notifications.read');
 });
 
 // Student Routes (Only Students Can Access)

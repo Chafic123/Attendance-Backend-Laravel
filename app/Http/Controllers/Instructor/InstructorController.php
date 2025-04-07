@@ -435,4 +435,24 @@ class InstructorController extends Controller
 
         return response()->json($calendarData);
     }
+
+    //list read notifcations for instructor 
+    public function notificationsRead()
+    {
+        $instructor = Auth::user()->instructor;
+
+        if (!$instructor) {
+            return response()->json(['error' => 'Instructor not found'], 404);
+        }
+
+        $notifications = Notification::where('instructor_id', $instructor->id)
+            ->where('read_status', true)
+            ->with(['student.user' => function ($query) {
+                $query->select('id', 'first_name', 'last_name');
+            }, 'course:id,name,Code,Section'])
+            ->select('id', 'student_id', 'instructor_id', 'course_id', 'message', 'type', 'read_status')
+            ->get();
+
+        return response()->json($notifications);
+    }
 }

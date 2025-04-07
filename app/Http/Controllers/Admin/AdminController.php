@@ -318,6 +318,45 @@ class AdminController extends Controller
         return response()->json(['message' => 'Student updated successfully']);
     }
 
+    //delete student 
+    public function deleteStudent($studentId)
+    {
+        $student = Student::find($studentId);
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        $user = User::find($student->user_id);
+        if ($user) {
+            $user->delete();
+        }
+
+        $student->delete();
+
+        return response()->json(['message' => 'Student deleted successfully']);
+    }
+
+    // delete instructor
+
+    public function deleteInstructor($instructorId)
+    {
+        $instructor = Instructor::find($instructorId);
+        
+        if (!$instructor) {
+            return response()->json(['message' => 'Instructor not found'], 404);
+        }
+    
+        $instructor->delete();
+    
+        $user = User::find($instructor->user_id);
+        
+        if ($user) {
+            $user->delete();
+        }
+    
+        return response()->json(['message' => 'Instructor deleted successfully']);
+    }
+
     // Edit Instructor
     public function editInstructor(Request $request, $instructorId)
     {
@@ -579,7 +618,7 @@ class AdminController extends Controller
     }
 
     //delete a student from a specific course
-    public function deleteStudent($courseId, $studentId)
+    public function deleteStudentCourse($courseId, $studentId)
     {
         $course = Course::find($courseId);
         $student = Student::find($studentId);
