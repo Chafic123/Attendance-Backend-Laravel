@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
+
+    protected $casts = [
+        'data' => 'array',
+    ];
+
     protected $fillable = [
         'instructor_id',
         'student_id',
@@ -13,6 +18,7 @@ class Notification extends Model
         'message',
         'type',
         'read_status', 
+        'data',
     ];
 
     public function instructor()

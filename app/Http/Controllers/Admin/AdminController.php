@@ -703,7 +703,6 @@ class AdminController extends Controller
                 'status' => $absencePercentage >= 25 ? 'Drop Risk' : 'Safe',
             ];
         }
-    
         $averageAbsence = count($students) ? round($totalAbsencePercentage / count($students), 2) : 0;
     
         return Pdf::loadView('reports.CourseAttendanceReport', [
@@ -713,7 +712,6 @@ class AdminController extends Controller
             'averageAbsence' => $averageAbsence,
             'session' => $course->course_sessions->first(),
         ])->setPaper('A4', 'portrait')
-          ->download("attendance_report_{$course->Code}.pdf");
+        ->download("attendance_report_{$course->Code}.pdf");
     }
-    
 }

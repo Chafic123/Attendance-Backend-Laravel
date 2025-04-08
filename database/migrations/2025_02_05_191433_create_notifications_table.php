@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('message');
 
             $table->enum('type', ['Regular', 'Warning']);
-            $table->boolean('read_status');
+            $table->boolean('read_status')->default(false);
 
             $table->foreign('instructor_id')
                 ->references('id')
@@ -29,7 +29,14 @@ return new class extends Migration
                 ->references('id')
                 ->on('students')
                 ->onDelete('cascade');
-
+            //add data 
+            $table->json('data')->nullable();
+            // add course_id
+            $table->unsignedBigInteger('course_id')->nullable();
+            $table->foreign('course_id')
+                ->references('id')
+                ->on('courses')
+                ->onDelete('cascade');
             $table->timestamps();
         });
     }

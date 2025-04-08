@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Validator;
 use Cloudinary\Cloudinary;
+use Illuminate\Support\Facades\DB;
 use App\Models\Instructor;
 use App\Events\StudentNotification;
 use Carbon\Carbon;
@@ -78,6 +79,38 @@ class InstructorController extends Controller
     }
 
     // Update request correction 
+    // public function updateRequestStatus(Request $request, $requestId)
+    // {
+    //     $instructor = Auth::user()->instructor;
+
+    //     if (!$instructor) {
+    //         return response()->json(['error' => 'Unauthorized request'], 403);
+    //     }
+
+    //     $request->validate([
+    //         'status' => 'required|in:approved,rejected',
+    //     ]);
+
+    //     $attendanceRequest = AttendanceRequest::with('attendance')->find($requestId);
+
+    //     if (!$attendanceRequest || $attendanceRequest->instructor_id !== $instructor->id) {
+    //         return response()->json(['error' => 'Request not found or unauthorized'], 404);
+    //     }
+
+    //     if ($request->status === 'approved') {
+
+    //         if ($attendanceRequest->attendance) {
+    //             $attendanceRequest->attendance->update(['is_present' => true]);
+    //         }
+    //     }
+
+    //     $attendanceRequest->update(['status' => $request->status]);
+
+    //     return response()->json(['message' => 'Attendance request ' . $request->status . ' successfully']);
+    // }
+
+
+    //tester
     public function updateRequestStatus(Request $request, $requestId)
     {
         $instructor = Auth::user()->instructor;
@@ -97,9 +130,46 @@ class InstructorController extends Controller
         }
 
         if ($request->status === 'approved') {
-
             if ($attendanceRequest->attendance) {
                 $attendanceRequest->attendance->update(['is_present' => true]);
+
+                // Recalculate the student's absence percentage
+                $student = $attendanceRequest->attendance->student;
+                $courseId = $attendanceRequest->attendance->course_session->course_id;
+
+                $absentCount = Attendance::where('student_id', $student->id)
+                    ->whereHas('course_session', function ($query) use ($courseId) {
+                        $query->where('course_id', $courseId);
+                    })
+                    ->where('is_present', false)
+                    ->count();
+
+                $totalSessions = Attendance::where('student_id', $student->id)
+                    ->whereHas('course_session', function ($query) use ($courseId) {
+                        $query->where('course_id', $courseId);
+                    })
+                    ->count();
+
+                $absencePercentage = ($totalSessions > 0) ? round($absentCount * 100 / $totalSessions, 2) : 0;
+
+                // Get current status from the pivot table
+                $currentStatus = DB::table('course_student')
+                    ->where('student_id', $student->id)
+                    ->where('course_id', $courseId)
+                    ->value('status');
+
+                // Update student status based on absence percentage
+                if ($absencePercentage < 25 && $absencePercentage >= 20 && $currentStatus === 'dropped') {
+                    DB::table('course_student')
+                        ->where('student_id', $student->id)
+                        ->where('course_id', $courseId)
+                        ->update(['status' => 'active']);
+                } elseif ($absencePercentage >= 25 && $currentStatus !== 'dropped') {
+                    DB::table('course_student')
+                        ->where('student_id', $student->id)
+                        ->where('course_id', $courseId)
+                        ->update(['status' => 'dropped']);
+                }
             }
         }
 
@@ -107,6 +177,7 @@ class InstructorController extends Controller
 
         return response()->json(['message' => 'Attendance request ' . $request->status . ' successfully']);
     }
+
 
     public function getAllStudentsCourse($courseId, $returnJson = true)
     {
@@ -319,7 +390,7 @@ class InstructorController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.InstructorSchedule', [
             'instructor' => $instructorData,
             'courses' => $coursesData,
-        ])->setPaper('a4', 'portrait'); 
+        ])->setPaper('a4', 'portrait');
 
         return $pdf->download('instructor_schedule.pdf');
     }
