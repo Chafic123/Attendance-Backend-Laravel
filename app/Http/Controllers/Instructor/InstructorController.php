@@ -225,6 +225,24 @@ class InstructorController extends Controller
         return $returnJson ? response()->json($studentsWithAttendance) : $studentsWithAttendance;
     }
 
+    public function markNotificationAsRead($notificationId)
+    {
+        $instructor = Auth::user()->instructor;
+        if (!$instructor) {
+            return response()->json(['error' => 'Instructor not logged in'], 401);
+        }
+
+        $notification = Notification::where('id', $notificationId)
+            ->where('instructor_id', $instructor->id)
+            ->first();
+        if (!$notification) {
+            return response()->json(['error' => 'Notification not found'], 404);
+        }
+
+        $notification->update(['read_status' => true]);
+
+        return response()->json(['message' => 'Notification marked as read', 'notification' => $notification]);
+    }
 
     public function sendNotification(Request $request)
     {

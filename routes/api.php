@@ -99,6 +99,8 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
         ->name('instructor.schedule.report.download');
     Route::get('/notifications-read', [InstructorController::class, 'notificationsRead'])
         ->name('instructor.notifications.read');
+    Route::put('/notifications/{notificationId}/read', [InstructorController::class, 'markNotificationAsRead'])
+        ->name('instructor.notification.read');
 });
 
 // Student Routes (Only Students Can Access)

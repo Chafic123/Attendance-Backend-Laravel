@@ -691,7 +691,7 @@ class AdminController extends Controller
 
             $absencePercentage = round($absentCount * 3.33, 2);
             $totalAbsencePercentage += $absencePercentage;
-    
+
             $reportData[] = [
                 'student_id' => $student->student_id,
                 'first_name' => optional($student->user)->first_name,
