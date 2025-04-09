@@ -185,28 +185,21 @@ class InstructorController extends Controller
         if (!$course) {
             return $returnJson ? response()->json(['message' => 'Course not found'], 404) : [];
         }
-
+    
         $students = $course->students()->with('user:id,first_name,last_name')->get();
         $studentsWithAttendance = [];
-
+    
         foreach ($students as $student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })->get();
-
-            $totalSessions = $attendanceRecords->count();
-            $presentCount = $attendanceRecords->where('is_present', true)->count();
-            $absentCount = $totalSessions - $presentCount;
-
-            $attendancePercentage = $totalSessions > 0
-                ? round(($presentCount / $totalSessions) * 100, 2)
-                : 0;
-
-            $absencePercentage = round(100 - $attendancePercentage, 2);
-
-            $status = $attendancePercentage < 75 ? 'Drop risk' : 'Safe';
-
+    
+            $absentCount = $attendanceRecords->where('is_present', false)->count();
+            $absencePercentage = round($absentCount * 3.33, 2);
+    
+            $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
+    
             $studentsWithAttendance[] = [
                 'student_id' => $student->id,
                 'Uni_id' => $student->student_id,
@@ -215,15 +208,15 @@ class InstructorController extends Controller
                 'major' => $student->major,
                 'image' => $student->image,
                 'video' => $student->video,
-                'attendance_percentage' => $attendancePercentage,
-                'absence_percentage' => $absencePercentage,
+                'absence_percentage' => $absencePercentage . '%',
                 'absent_count' => $absentCount,
                 'status' => $status
             ];
         }
-
+    
         return $returnJson ? response()->json($studentsWithAttendance) : $studentsWithAttendance;
     }
+    
 
     public function markNotificationAsRead($notificationId)
     {
