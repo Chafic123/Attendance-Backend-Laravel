@@ -16,6 +16,7 @@ use App\Models\Instructor;
 use App\Events\StudentNotification;
 use Carbon\Carbon;
 use App\Models\CourseSession;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InstructorController extends Controller
 {
@@ -185,21 +186,21 @@ class InstructorController extends Controller
         if (!$course) {
             return $returnJson ? response()->json(['message' => 'Course not found'], 404) : [];
         }
-    
+
         $students = $course->students()->with('user:id,first_name,last_name')->get();
         $studentsWithAttendance = [];
-    
+
         foreach ($students as $student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })->get();
-    
+
             $absentCount = $attendanceRecords->where('is_present', false)->count();
             $absencePercentage = round($absentCount * 3.33, 2);
-    
+
             $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
-    
+
             $studentsWithAttendance[] = [
                 'student_id' => $student->id,
                 'Uni_id' => $student->student_id,
@@ -213,10 +214,10 @@ class InstructorController extends Controller
                 'status' => $status
             ];
         }
-    
+
         return $returnJson ? response()->json($studentsWithAttendance) : $studentsWithAttendance;
     }
-    
+
 
     public function markNotificationAsRead($notificationId)
     {
@@ -536,5 +537,98 @@ class InstructorController extends Controller
             ->get();
 
         return response()->json($notifications);
+    }
+
+    public function downloadCourseAttendanceReport($courseId)
+    {
+        $course = Course::with([
+            'students.user',
+            'students.department',
+            'instructors.user',
+        ])->find($courseId);
+
+        if (!$course) {
+            return response()->json(['error' => 'Course not found'], 404);
+        }
+
+        $students = $course->students;
+        $instructor = $course->instructors->first();
+
+        $reportData = [];
+        $totalAbsencePercentage = 0;
+
+        foreach ($students as $student) {
+            $attendanceRecords = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                })
+                ->get();
+
+            $absentCount = $attendanceRecords->where('is_present', false)->count();
+
+            $absencePercentage = round($absentCount * 3.33, 2);
+            $totalAbsencePercentage += $absencePercentage;
+
+            $reportData[] = [
+                'student_id' => $student->student_id,
+                'first_name' => optional($student->user)->first_name,
+                'last_name' => optional($student->user)->last_name,
+                'email' => optional($student->user)->email,
+                'department' => optional($student->department)->name ?? 'N/A',
+                'major' => $student->major,
+                'absence_percentage' => $absencePercentage,
+                'status' => $absencePercentage >= 25 ? 'Drop Risk' : 'Safe',
+            ];
+        }
+        $averageAbsence = count($students) ? round($totalAbsencePercentage / count($students), 2) : 0;
+
+        return Pdf::loadView('reports.CourseAttendanceReport', [
+            'course' => $course,
+            'instructor' => $instructor,
+            'students' => $reportData,
+            'averageAbsence' => $averageAbsence,
+            'session' => $course->course_sessions->first(),
+        ])->setPaper('A4', 'portrait')
+            ->download("attendance_report_{$course->Code}.pdf");
+    }
+
+    public function downloadStudentCourseAttendanceReport($studentId, $courseId)
+    {
+        $course = Course::with(['instructors.user'])->find($courseId);
+        if (!$course) {
+            return response()->json(['message' => 'Course not found'], 404);
+        }
+
+        $student = $course->students()->with(['user', 'department'])->where('students.id', $studentId)->first();
+        if (!$student) {
+            return response()->json(['message' => 'Student not enrolled in this course'], 404);
+        }
+
+        $attendanceRecords = Attendance::where('student_id', $student->id)
+            ->where('is_present', false)
+            ->whereHas('course_session', function ($query) use ($course) {
+                $query->where('course_id', $course->id);
+            })
+            ->with('course_session') // include session date
+            ->get();
+
+
+        $absentCount = $attendanceRecords->where('is_present', false)->count();
+        $absencePercentage = round($absentCount * 3.33, 2);
+        $status = $absencePercentage >= 25 ? 'Drop Risk' : 'Safe';
+
+        $instructor = $course->instructors->first();
+
+        return Pdf::loadView('reports.StudentCourseAttendanceReport', [
+            'course' => $course,
+            'student' => $student,
+            'attendanceRecords' => $attendanceRecords,
+            'absencePercentage' => $absencePercentage,
+            'absentCount' => $absentCount,
+            'status' => $status,
+            'instructor' => $instructor,
+        ])
+            ->setPaper('A4', 'portrait')
+            ->download("attendance_report_{$student->student_id}_{$course->Code}.pdf");
     }
 }

@@ -72,8 +72,6 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::get('/courses/{courseId}/attendance-report', [AdminController::class, 'downloadCourseAttendanceReport'])
         ->name('admin.course.attendance.report.download');
     Route::get('/reports/student-attendance/{studentId}', [AdminController::class, 'downloadStudentCoursesAttendanceReport']);
-
-    
 });
 
 // Instructor Routes (Only Instructors Can Access)
@@ -103,7 +101,10 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
         ->name('instructor.notifications.read');
     Route::put('/notifications/{notificationId}/read', [InstructorController::class, 'markNotificationAsRead'])
         ->name('instructor.notification.read');
-
+    Route::get('/courses/{courseId}/attendance-report', [InstructorController::class, 'downloadCourseAttendanceReport'])
+        ->name('instructor.course.attendance.report.download');
+    Route::get('/students/{studentId}/courses/{courseId}/attendance-report', [InstructorController::class, 'downloadStudentCourseAttendanceReport'])
+        ->name('instructor.student.course.calendar');
 });
 
 // Student Routes (Only Students Can Access)
