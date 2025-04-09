@@ -12,6 +12,7 @@ class CourseStudent extends Pivot
         'course_id',
         'student_id',
         'enrollment-date',
+        'status',
     ];
 
     public $timestamps = true; 

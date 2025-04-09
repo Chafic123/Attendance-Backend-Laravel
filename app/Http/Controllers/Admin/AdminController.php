@@ -172,7 +172,7 @@ class AdminController extends Controller
             $absentCount = $attendanceRecords->where('is_present', false)->count();
             $absencePercentage = round($absentCount * 3.33, 2);
 
-            $status = $absencePercentage >= 25 ? 'At risk of drop' : 'Safe';
+            $status = $absencePercentage >= 25 ? 'Risk of drop' : 'Safe';
 
             return [
                 'id' => $course->id,
@@ -714,4 +714,52 @@ class AdminController extends Controller
         ])->setPaper('A4', 'portrait')
         ->download("attendance_report_{$course->Code}.pdf");
     }
+// student Courses
+public function downloadStudentCoursesAttendanceReport($studentId)
+{
+    $student = Student::with(['user', 'department', 'courses.instructors.user'])->find($studentId);
+
+    if (!$student) {
+        return response()->json(['error' => 'Student not found'], 404);
+    }
+
+    $courses = $student->courses;
+    $reportData = [];
+    $totalAbsencePercentage = 0;
+
+    foreach ($courses as $course) {
+        $attendanceRecords = Attendance::where('student_id', $student->id)
+            ->whereHas('course_session', function ($query) use ($course) {
+                $query->where('course_id', $course->id);
+            })
+            ->get();
+
+        $absentCount = $attendanceRecords->where('is_present', false)->count();
+        $absencePercentage = round($absentCount * 3.33, 2);
+        $totalAbsencePercentage += $absencePercentage;
+
+        $reportData[] = [
+            'course_code' => $course->Code,
+            'course_name' => $course->name,
+            'section' => $course->Section ?? 'N/A',
+            'credits' => $course->credits ?? 'N/A',
+            'instructor' => optional($course->instructors->first()?->user)->first_name . ' ' . optional($course->instructors->first()?->user)->last_name ?? 'N/A',
+            'absence_percentage' => $absencePercentage,
+            'status' => $absencePercentage >= 25 ? 'Risk of Drop ' : 'Safe',
+        ];
+    }
+
+    $averageAbsence = count($courses) ? round($totalAbsencePercentage / count($courses), 2) : 0;
+    $averageAttendance = round(100 - $averageAbsence, 2);
+
+    return PDF::loadView('reports.Student_Courses_AttendanceReport', [
+        'student' => $student,
+        'courses' => $reportData,
+        'averageAbsence' => $averageAbsence,
+        'averageAttendance' => $averageAttendance
+    ])
+    ->setPaper('A4', 'portrait')
+    ->download("student_attendance_report_{$student->student_id}.pdf");
+}
+
 }
