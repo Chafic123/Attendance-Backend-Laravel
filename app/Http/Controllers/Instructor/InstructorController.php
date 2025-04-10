@@ -124,53 +124,86 @@ class InstructorController extends Controller
             'status' => 'required|in:approved,rejected',
         ]);
 
-        $attendanceRequest = AttendanceRequest::with('attendance')->find($requestId);
+        $attendanceRequest = AttendanceRequest::with(['attendance.course_session.course', 'attendance.student'])->find($requestId);
 
         if (!$attendanceRequest || $attendanceRequest->instructor_id !== $instructor->id) {
             return response()->json(['error' => 'Request not found or unauthorized'], 404);
         }
 
-        if ($request->status === 'approved') {
-            if ($attendanceRequest->attendance) {
-                $attendanceRequest->attendance->update(['is_present' => true]);
+        // Prevent changing an already approved
+        if (
+            $attendanceRequest->status === 'approved' &&
+            $request->status === 'rejected'
+        ) {
+            return response()->json(['error' => 'Approved requests cannot be rejected.'], 400);
+        }
 
-                // Recalculate the student's absence percentage
-                $student = $attendanceRequest->attendance->student;
-                $courseId = $attendanceRequest->attendance->course_session->course_id;
+        // ✅ If approved and attendance record exists, update attendance and check status
+        if ($request->status === 'approved' && $attendanceRequest->attendance) {
+            $attendance = $attendanceRequest->attendance;
+            $attendance->update(['is_present' => true]);
 
-                $absentCount = Attendance::where('student_id', $student->id)
-                    ->whereHas('course_session', function ($query) use ($courseId) {
-                        $query->where('course_id', $courseId);
-                    })
-                    ->where('is_present', false)
-                    ->count();
+            $student = $attendance->student;
+            $course = $attendance->course_session->course;
+            $courseId = $course->id;
 
-                $totalSessions = Attendance::where('student_id', $student->id)
-                    ->whereHas('course_session', function ($query) use ($courseId) {
-                        $query->where('course_id', $courseId);
-                    })
-                    ->count();
+            $attendances = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', fn($q) => $q->where('course_id', $courseId));
 
-                $absencePercentage = ($totalSessions > 0) ? round($absentCount * 100 / $totalSessions, 2) : 0;
+            $absentCount = (clone $attendances)->where('is_present', false)->count();
+            $totalSessions = $attendances->count();
 
-                // Get current status from the pivot table
-                $currentStatus = DB::table('course_student')
+            $absencePercentage = ($totalSessions > 0) ? round($absentCount * 100 / $totalSessions, 2) : 0;
+
+            $currentStatus = DB::table('course_student')
+                ->where('student_id', $student->id)
+                ->where('course_id', $courseId)
+                ->value('status');
+
+            if ($absencePercentage < 25 && $absencePercentage >= 20 && $currentStatus === 'dropped') {
+                DB::table('course_student')
                     ->where('student_id', $student->id)
                     ->where('course_id', $courseId)
-                    ->value('status');
+                    ->update(['status' => 'active']);
+            } elseif ($absencePercentage >= 25 && $currentStatus !== 'dropped') {
+                DB::table('course_student')
+                    ->where('student_id', $student->id)
+                    ->where('course_id', $courseId)
+                    ->update(['status' => 'dropped']);
+            }
 
-                // Update student status based on absence percentage
-                if ($absencePercentage < 25 && $absencePercentage >= 20 && $currentStatus === 'dropped') {
-                    DB::table('course_student')
-                        ->where('student_id', $student->id)
-                        ->where('course_id', $courseId)
-                        ->update(['status' => 'active']);
-                } elseif ($absencePercentage >= 25 && $currentStatus !== 'dropped') {
-                    DB::table('course_student')
-                        ->where('student_id', $student->id)
-                        ->where('course_id', $courseId)
-                        ->update(['status' => 'dropped']);
-                }
+            Notification::create([
+                'student_id' => $student->id,
+                'instructor_id' => $instructor->id,
+                'course_id' => $courseId,
+                'type' => 'Regular',
+                'message' => "Your attendance request was approved.",
+                'data' => [
+                    'date' => now()->toDateTimeString(),
+                    'status' => 'approved',
+                    'course_name' => $course->name,
+                ],
+            ]);
+        }
+
+        //Send rejection notification 
+        if ($request->status === 'rejected') {
+            $student = $attendanceRequest->attendance->student ?? null;
+            $course = $attendanceRequest->attendance->course_session->course ?? null;
+
+            if ($student && $course) {
+                Notification::create([
+                    'student_id' => $student->id,
+                    'instructor_id' => $instructor->id,
+                    'course_id' => $course->id,
+                    'type' => 'Warning',
+                    'message' => "Your attendance request was rejected.",
+                    'data' => [
+                        'date' => now()->toDateTimeString("Y-m-d"),
+                        'status' => 'rejected',
+                        'course_name' => $course->name,
+                    ],
+                ]);
             }
         }
 
@@ -178,7 +211,6 @@ class InstructorController extends Controller
 
         return response()->json(['message' => 'Attendance request ' . $request->status . ' successfully']);
     }
-
 
     public function getAllStudentsCourse($courseId, $returnJson = true)
     {
@@ -217,7 +249,6 @@ class InstructorController extends Controller
 
         return $returnJson ? response()->json($studentsWithAttendance) : $studentsWithAttendance;
     }
-
 
     public function markNotificationAsRead($notificationId)
     {
@@ -609,7 +640,7 @@ class InstructorController extends Controller
             ->whereHas('course_session', function ($query) use ($course) {
                 $query->where('course_id', $course->id);
             })
-            ->with('course_session') 
+            ->with('course_session')
             ->get();
 
 
