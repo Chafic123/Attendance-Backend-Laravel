@@ -138,7 +138,7 @@ class InstructorController extends Controller
             return response()->json(['error' => 'Approved requests cannot be rejected.'], 400);
         }
 
-        // ✅ If approved and attendance record exists, update attendance and check status
+        // If approved and attendance record exists, update attendance and check status
         if ($request->status === 'approved' && $attendanceRequest->attendance) {
             $attendance = $attendanceRequest->attendance;
             $attendance->update(['is_present' => true]);
