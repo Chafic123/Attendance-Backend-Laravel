@@ -39,6 +39,7 @@ class Course extends Model
     {
         return $this->belongsToMany(Student::class, 'course_student')
         ->withPivot('enrollment-date')
+        ->withPivot('status')
         ->withTimestamps();
     }
 

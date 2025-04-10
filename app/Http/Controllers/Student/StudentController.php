@@ -33,12 +33,9 @@ class StudentController extends Controller
             return response()->json(['error' => 'Student not found'], 404);
         }
     
-        $courses = $student->courses()
-            ->with('instructors.user')
-            ->wherePivot('status', '!=', 'dropped') // active courses
-            ->get();
+        $courses = $student->courses()->with('instructors.user')->get();
     
-        $coursesWithInstructor = $courses->map(function ($course) use ($student) {
+        $filteredCourses = $courses->filter(function ($course) use ($student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
@@ -46,79 +43,106 @@ class StudentController extends Controller
     
             $absentCount = $attendanceRecords->where('is_present', false)->count();
             $absencePercentage = round($absentCount * 3.33, 2);
-            $status = 'Active';
     
-            $warningThresholds = [10, 15, 20];
+            $currentStatus = DB::table('course_student')
+                ->where('student_id', $student->id)
+                ->where('course_id', $course->id)
+                ->value('status');
     
-            foreach ($warningThresholds as $percent) {
-                if ($absencePercentage >= $percent) {
-                    $existing = Notification::where('student_id', $student->id)
+            $newStatus = 'active';
+            $riskStatus = 'Safe';
+    
+            if ($absencePercentage >= 25) {
+                $newStatus = 'dropped';
+                $riskStatus = 'dropped';
+    
+                if ($currentStatus !== 'dropped') {
+                    DB::table('course_student')
+                        ->where('student_id', $student->id)
+                        ->where('course_id', $course->id)
+                        ->update(['status' => 'dropped']);
+    
+                    $instructor = $course->instructors->first();
+    
+                    Notification::create([
+                        'student_id' => $student->id,
+                        'instructor_id' => $instructor?->id,
+                        'course_id' => $course->id,
+                        'type' => 'Warning',
+                        'message' => "You are dropped from course {$course->name} due to excessive absences.",
+                        'data' => [
+                            'course_name' => $course->name,
+                            'absence_percentage' => $absencePercentage,
+                            'status' => 'dropped',
+                        ],
+                    ]);
+                }
+    
+            } elseif ($absencePercentage >= 20) {
+                $newStatus = 'active';
+                $riskStatus = 'Risk of Drop';
+    
+                if ($currentStatus !== 'active') {
+                    DB::table('course_student')
+                        ->where('student_id', $student->id)
+                        ->where('course_id', $course->id)
+                        ->update(['status' => 'active']);
+                }
+            } else {
+                $newStatus = 'active';
+                $riskStatus = 'Safe';
+    
+                if ($currentStatus !== 'active') {
+                    DB::table('course_student')
+                        ->where('student_id', $student->id)
+                        ->where('course_id', $course->id)
+                        ->update(['status' => 'active']);
+                }
+            }
+    
+            // Send warnings at 10%, 15%, 20%
+            foreach ([10, 15, 20] as $threshold) {
+                if ($absencePercentage >= $threshold) {
+                    $exists = Notification::where('student_id', $student->id)
                         ->where('course_id', $course->id)
                         ->where('type', 'Warning')
-                        ->where('data->percent', $percent)
+                        ->where('data->percent', $threshold)
                         ->exists();
     
-                    if (!$existing) {
-                        $instructor = $course->instructors->first();
-    
-                        if ($instructor) {
-                            Notification::create([
-                                'student_id' => $student->id,
-                                'instructor_id' => $instructor->id,
-                                'course_id' => $course->id,
-                                'type' => 'Warning',
-                                'message' => "Absence warning in {$course->name}.",
-                                'data' => [
-                                    'percent' => $percent,
-                                    'course_name' => $course->name,
-                                    'absence_percentage' => $absencePercentage
-                                ]
-                            ]);
-                        }
+                    if (!$exists && $course->instructors->first()) {
+                        Notification::create([
+                            'student_id' => $student->id,
+                            'instructor_id' => $course->instructors->first()->id,
+                            'course_id' => $course->id,
+                            'type' => 'Warning',
+                            'message' => "Absence warning in {$course->name}.",
+                            'data' => [
+                                'percent' => $threshold,
+                                'course_name' => $course->name,
+                                'absence_percentage' => $absencePercentage,
+                            ],
+                        ]);
                     }
                 }
             }
     
-            // Handle drop condition (absencePercentage >= 25)
+            return $newStatus !== 'dropped';
+        });
+    
+        $coursesWithData = $filteredCourses->map(function ($course) use ($student) {
+            $attendanceRecords = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                })->get();
+    
+            $absentCount = $attendanceRecords->where('is_present', false)->count();
+            $absencePercentage = round($absentCount * 3.33, 2);
+    
+            $riskStatus = 'Safe';
             if ($absencePercentage >= 25) {
-                DB::table('course_student')
-                    ->where('student_id', $student->id)
-                    ->where('course_id', $course->id)
-                    ->update(['status' => 'dropped']);
-                $status = 'Dropped'; // Drop the student
-            }
-    
-            // Handle re-enrollment if absence percentage is between 20% and 25%
-            if ($absencePercentage >= 20 && $absencePercentage < 25) {
-                $currentStatus = DB::table('course_student')
-                    ->where('student_id', $student->id)
-                    ->where('course_id', $course->id)
-                    ->value('status'); 
-    
-                // Only re-enroll the student if they are currently dropped
-                if ($currentStatus === 'dropped') {
-                    DB::table('course_student')
-                        ->where('student_id', $student->id)
-                        ->where('course_id', $course->id)
-                        ->update(['status' => 'active']); 
-                    $status = 'Risk of Drop'; 
-                }
-            }
-    
-            if ($absencePercentage < 20) {
-                $currentStatus = DB::table('course_student')
-                    ->where('student_id', $student->id)
-                    ->where('course_id', $course->id)
-                    ->value('status'); 
-    
-                // Only re-enroll the student if they are currently dropped
-                if ($currentStatus === 'dropped') {
-                    DB::table('course_student')
-                        ->where('student_id', $student->id)
-                        ->where('course_id', $course->id)
-                        ->update(['status' => 'active']); 
-                    $status = 'Active';
-                }
+                $riskStatus = 'Dropped';
+            } elseif ($absencePercentage >= 20) {
+                $riskStatus = 'Risk of Drop';
             }
     
             return [
@@ -129,11 +153,11 @@ class StudentController extends Controller
                     ? $course->instructors->first()->user->first_name . ' ' . $course->instructors->first()->user->last_name
                     : 'No instructor assigned',
                 'absence_percentage' => $absencePercentage . '%',
-                'status' => $status
+                'risk_status' => $riskStatus,
             ];
         });
     
-        return response()->json($coursesWithInstructor);
+        return response()->json($coursesWithData->values());
     }
     
     
