@@ -609,7 +609,7 @@ class InstructorController extends Controller
             ->whereHas('course_session', function ($query) use ($course) {
                 $query->where('course_id', $course->id);
             })
-            ->with('course_session') // include session date
+            ->with('course_session') 
             ->get();
 
 

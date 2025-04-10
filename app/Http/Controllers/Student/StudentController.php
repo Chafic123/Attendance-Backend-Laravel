@@ -125,10 +125,10 @@ class StudentController extends Controller
                     }
                 }
             }
-    
+
             return $newStatus !== 'dropped';
         });
-    
+
         $coursesWithData = $filteredCourses->map(function ($course) use ($student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
@@ -144,7 +144,7 @@ class StudentController extends Controller
             } elseif ($absencePercentage >= 20) {
                 $riskStatus = 'Risk of Drop';
             }
-    
+
             return [
                 'course_id' => $course->id,
                 'course_name' => $course->name,
@@ -159,7 +159,6 @@ class StudentController extends Controller
     
         return response()->json($coursesWithData->values());
     }
-    
     
     public function getNotificationsForLoggedInStudent(Request $request)
     {
