@@ -18,6 +18,7 @@ class StudentCredentialsMail extends Mailable
     public $password;
     public $major;
     public $departmentName;
+    public $studentId;
 
     /**
      * Create a new message instance.
@@ -28,14 +29,16 @@ class StudentCredentialsMail extends Mailable
         string $personalEmail,
         string $password,
         string $major,
-        string $departmentName
-    ) {
+        string $departmentName,
+        string $student_id
+        ) {
         $this->firstName = $firstName;
         $this->studentEmail = $studentEmail;
         $this->personalEmail = $personalEmail;
         $this->password = $password;
         $this->major = $major;
         $this->departmentName = $departmentName;
+        $this->studentId = $student_id;
     }
 
     public function envelope(): Envelope
@@ -56,6 +59,7 @@ class StudentCredentialsMail extends Mailable
                 'password' => $this->password,
                 'major' => $this->major,
                 'departmentName' => $this->departmentName,
+                'studentId' => $this->studentId,
             ]
         );
     }

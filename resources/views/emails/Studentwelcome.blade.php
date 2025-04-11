@@ -23,6 +23,7 @@
             <p>Your university account has been created successfully. Here are your credentials:</p>
             
             <div class="credentials">
+                <p><strong>Student ID (Login ID):</strong> {{ $studentId }}</p>
                 <p><strong>University Email:</strong> {{ $studentEmail }}</p>
                 <p><strong>Password:</strong> {{ $password }}</p>
                 {{-- department + major  --}}

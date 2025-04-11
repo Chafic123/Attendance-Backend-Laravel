@@ -42,7 +42,7 @@ class AddStudentController extends Controller
                 'status' => 'Student',
             ]);
 
-            Student::create([
+            $student = Student::create([
                 'user_id' => $user->id,
                 'department_id' => $department->id,
                 'address' => $validated['address'],
@@ -57,7 +57,8 @@ class AddStudentController extends Controller
                 $validated['personal_email'],
                 $plainPassword,
                 $validated['major'],
-                $department->name
+                $department->name,
+                $student->student_id
             );
 
             return response()->json([
@@ -100,7 +101,8 @@ class AddStudentController extends Controller
         string $personalEmail,
         string $password,
         string $major,
-        string $departmentName
+        string $departmentName,
+        string $studentId
     ): void {
         try {
             Mail::to($personalEmail)
@@ -110,7 +112,8 @@ class AddStudentController extends Controller
                     $personalEmail,
                     $password,
                     $major,
-                    $departmentName
+                    $departmentName,
+                    $studentId
                 ));
             Log::info("Welcome email sent to {$personalEmail}");
         } catch (\Exception $e) {
