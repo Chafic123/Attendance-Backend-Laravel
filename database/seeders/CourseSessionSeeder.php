@@ -30,7 +30,7 @@ class CourseSessionSeeder extends Seeder
             $currentDate = $startDate->copy();
             while ($currentDate->lte($endDate)) {
                 if ($this->matchesCourseDays($course->day_of_week, $currentDate)) {
-                    CourseSession::firstOrCreate([
+                    CourseSession::create([
                         'course_id' => $course->id,
                         'date'      => $currentDate->format('Y-m-d'),
                     ], [
