@@ -36,7 +36,7 @@ class MachineLearningController extends Controller
         $request->validate([
             'student_id' => 'required|exists:students,id',
             'processed' => 'required|in:0,1',
-            'message' => 'nullable|string' // Optional message from ML script
+            'message' => 'nullable|string'
         ]);
 
         Log::info("Incoming data: ", $request->all());
@@ -48,7 +48,6 @@ class MachineLearningController extends Controller
         }
 
         if ($request->processed == '1') {
-            // Success case - mark as processed
             $student->processed_video = '1';
             $student->save();
             Log::info("Student ID {$student->id} video processing status updated to: {$student->processed_video}");
@@ -131,11 +130,7 @@ class MachineLearningController extends Controller
 
     public function index()
     {
-        // Normally
         $today = now()->format('Y-m-d');
-
-        // FORCE Thursday 
-        // $thursdayDate = now()->startOfWeek()->addDays(3)->format('Y-m-d'); // (Monday=0, Tuesday=1, Wednesday=2, Thursday=3)
 
         $courseSessions = CourseSession::with(['course', 'students.user'])
             ->whereDate('date', $today)
@@ -155,7 +150,6 @@ class MachineLearningController extends Controller
                         return [
                             'student_id' => $student->id,
                             'name' => $student->user->first_name . ' ' . $student->user->last_name,
-                            // 'profile_video' => $student->video,
                         ];
                     }),
                 ];
