@@ -36,6 +36,7 @@ class MachineLearningController extends Controller
         $request->validate([
             'student_id' => 'required|exists:students,id',
             'processed' => 'required|in:0,1',
+            'message' => 'nullable|string' // Optional message from ML script
         ]);
 
         Log::info("Incoming data: ", $request->all());
@@ -46,13 +47,56 @@ class MachineLearningController extends Controller
             return response()->json(['error' => 'Student not found'], 404);
         }
 
-        Log::info("Updating student: " . $student->id);
-        $student->processed_video = (string) $request->processed;
-        $student->save();
+        if ($request->processed == '1') {
+            // Success case - mark as processed
+            $student->processed_video = '1';
+            $student->save();
+            Log::info("Student ID {$student->id} video processing status updated to: {$student->processed_video}");
+        } else {
+            try {
+                if ($student->video && Storage::exists($student->video)) {
+                    Storage::delete($student->video);
+                    Log::info("Deleted video for student ID: {$student->id}");
+                }
 
-        Log::info("Student ID {$student->id} video processing status updated to: {$student->processed_video}");
+                $student->video = null;
+                $student->processed_video = '0';
+                $student->save();
 
-        return response()->json(['message' => 'Processing status updated successfully']);
+                $notificationMessage = $request->message ?? 'Video processing failed (not enough frames detected)';
+                
+                \App\Models\Notification::create([
+                    'student_id' => $student->id,
+                    'course_id' => null,
+                    'instructor_id' => null,
+                    'message' => $notificationMessage,
+                    'type' => 'Warning',
+                    'read_status' => false,
+                    'data' => [
+                        'original_message' => $request->message,
+                        'required_frames' => config('ml.minimum_frames', 300),
+                        'student_name' => $student->user->name ?? 'Unknown',
+                    ]
+                ]);
+
+                Log::info("Reset video status and created notification for student ID: {$student->id}");
+            } catch (\Exception $e) {
+                Log::error("Error cleaning up failed video for student {$student->id}: " . $e->getMessage());
+                return response()->json([
+                    'error' => 'Failed to clean up video',
+                    'details' => $e->getMessage()
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Processing status updated successfully',
+            'student' => [
+                'id' => $student->id,
+                'processed_video' => $student->processed_video,
+                'has_video' => !empty($student->video)
+            ]
+        ]);
     }
 
     public function submitAttendance(Request $request)
