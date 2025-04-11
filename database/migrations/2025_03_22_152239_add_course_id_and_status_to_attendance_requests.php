@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('attendance_requests', function (Blueprint $table) {
             $table->foreignId('course_id')->constrained()->onDelete('cascade');
-            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
         });
     }
 

@@ -25,10 +25,9 @@ return new class extends Migration
                 ->references('id')
                 ->on('departments')
                 ->onDelete('cascade');
-
+            $table->string('student_id', 8)->unique()->after('id');
             $table->string('major');
             $table->string('phone_number');
-            $table->string('personal_email')->unique()->after('phone_number')->nullable();
             $table->string('address')->nullable();
             $table->string('image')->nullable();
             $table->string('video')->nullable();

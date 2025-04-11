@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('instructor_id');
+            $table->unsignedBigInteger('instructor_id')->nullable();
             $table->unsignedBigInteger('student_id');
             $table->text('message');
 
@@ -29,14 +29,7 @@ return new class extends Migration
                 ->references('id')
                 ->on('students')
                 ->onDelete('cascade');
-            //add data 
             $table->json('data')->nullable();
-            // add course_id
-            $table->unsignedBigInteger('course_id')->nullable();
-            $table->foreign('course_id')
-                ->references('id')
-                ->on('courses')
-                ->onDelete('cascade');
             $table->timestamps();
         });
     }

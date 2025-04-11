@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('status', ['Admin', 'Student', 'Instructor']);
             $table->rememberToken(); // "Remember Me" functionality
             $table->timestamps();
+            $table->string('personal_email')->unique()->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
