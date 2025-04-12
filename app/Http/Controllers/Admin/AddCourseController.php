@@ -86,7 +86,7 @@ class AddCourseController extends Controller
             'day_of_week' => $validated['day_of_week'],
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'credit' => $validated['credit'],
+            'credits' => $validated['credit'],
         ]);
 
         $course->instructors()->attach($instructor->id);

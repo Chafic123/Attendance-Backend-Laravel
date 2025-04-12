@@ -412,9 +412,13 @@ class AdminController extends Controller
 
         foreach ($students as $student) {
             $student->courses()->syncWithoutDetaching([
-                $request->course_id => ['enrollment-date' => now()->toDateString()]
+                $request->course_id => [
+                    'enrollment_date' => now()->toDateString(),
+                    'status' => 'active'
+                ]
             ]);
         }
+        
 
         return response()->json(['message' => 'Students enrolled successfully']);
     }
