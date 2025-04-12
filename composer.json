@@ -10,6 +10,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "cloudinary-labs/cloudinary-laravel": "^3.0",
         "cloudinary/cloudinary_php": "^3.1",
+        "doctrine/dbal": "^4.2",
         "laravel/breeze": "^2.3",
         "laravel/framework": "^11.41",
         "laravel/passport": "^12.4",
