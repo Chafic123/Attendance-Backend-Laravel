@@ -45,11 +45,8 @@ class Course extends Model
 
     public function instructors()
     {
-        return $this->belongsToMany(Instructor::class , 'course_instructor')
-                    ->withPivot('status', 'enrollment-date')
-                    ->withTimestamps();
+        return $this->belongsToMany(Instructor::class, 'course_instructor')->withTimestamps();
     }
-    
 
     public function terms()
     {
