@@ -115,7 +115,6 @@ class AddCourseController extends Controller
             }
         }
 
-
         return response()->json([
             'message' => 'Course added successfully with instructor assigned',
             'course' => $course,
