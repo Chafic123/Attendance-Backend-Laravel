@@ -18,6 +18,7 @@ use App\Models\Instructor;
 use App\Models\Admin;
 use App\Models\Attendance;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Notification; // Add this line to import the Notification model
 
 class AdminController extends Controller
 {
@@ -146,35 +147,35 @@ class AdminController extends Controller
     public function getCoursesForStudent($studentId)
     {
         $student = Student::find($studentId);
-    
+
         if (!$student) {
             return response()->json(['message' => 'Student not found'], 404);
         }
-    
+
         $courses = $student->courses()
-            ->withPivot('status') 
+            ->withPivot('status')
             ->with(['instructors.user' => function ($query) {
                 $query->select('users.id', 'users.first_name', 'users.last_name');
             }])
             ->get();
-    
+
         $coursesWithInstructors = $courses->map(function ($course) use ($student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })
                 ->get();
-    
+
             $absentCount = $attendanceRecords->where('is_present', false)->count();
             $absencePercentage = round($absentCount * 3.33, 2);
             $riskStatus = $absencePercentage >= 25 ? 'Risk of drop' : 'Safe';
-    
+
             return [
                 'id' => $course->id,
                 'course_code' => $course->Code,
                 'course_name' => $course->name,
                 'section' => $course->Section,
-                'course_status' => $course->pivot->status, 
+                'course_status' => $course->pivot->status,
                 'instructors' => $course->instructors->map(function ($instructor) {
                     return [
                         'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name
@@ -184,10 +185,9 @@ class AdminController extends Controller
                 'status' => $riskStatus,
             ];
         });
-    
+
         return response()->json($coursesWithInstructors);
     }
-    
 
 
     //delete student from course 
@@ -220,14 +220,16 @@ class AdminController extends Controller
         }
 
         $instructor = $course->instructors->first();
-        if (!$instructor) {
-            return response()->json(['message' => 'Instructor not found for this section'], 404);
+
+        if (!$instructor || $instructor->pivot->status === 'dropped') {
+            return response()->json(['instructor_name' => 'Not Assigned Yet']);
         }
 
         return response()->json([
             'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name,
         ]);
     }
+
 
     public function updateProfile(Request $request)
     {
@@ -269,7 +271,6 @@ class AdminController extends Controller
             'message' => 'Profile updated successfully',
         ]);
     }
-
 
     // EditStudent 
 
@@ -408,11 +409,16 @@ class AdminController extends Controller
             'course_id' => 'required|exists:courses,id',
         ]);
 
+        $course = Course::find($request->course_id);
+
         $students = Student::whereIn('id', $request->student_ids)->get();
 
         foreach ($students as $student) {
             $student->courses()->syncWithoutDetaching([
-                $request->course_id => ['enrollment-date' => now()->toDateString()]
+                $request->course_id => [
+                    'enrollment-date' => now()->toDateString(),
+                    'status' => 'active'
+                ]
             ]);
         }
 
@@ -431,13 +437,14 @@ class AdminController extends Controller
         $courseId = $request->course_id;
 
         foreach ($request->instructor_ids as $instructorId) {
-            $exists = DB::table('course_instructor')
-                ->where('instructor_id', $instructorId)
-                ->where('course_id', $courseId)
-                ->exists();
+            $instructor = Instructor::findOrFail($instructorId);
 
-            if (!$exists) {
-                Instructor::findOrFail($instructorId)->courses()->attach($courseId);
+            // Check if already enrolled
+            if (!$instructor->courses()->where('course_id', $courseId)->exists()) {
+                $instructor->courses()->attach($courseId, [
+                    'status' => 'active',
+                    'enrollment_date' => now()->toDateString(),
+                ]);
             }
         }
 
@@ -626,9 +633,60 @@ class AdminController extends Controller
             return response()->json(['error' => 'Course or student not found'], 404);
         }
 
-        $course->students()->detach($studentId);
+        if (!$course->students()->where('student_id', $studentId)->exists()) {
+            return response()->json(['error' => 'Student is not enrolled in this course'], 400);
+        }
 
-        return response()->json(['message' => 'Student removed from course successfully']);
+        $course->students()->updateExistingPivot($studentId, [
+            'status' => 'dropped'
+        ]);
+
+        Notification::create([
+            'student_id' => $student->id,
+            'instructor_id' => null,
+            'course_id' => $course->id,
+            'type' => 'Warning',
+            'message' => "You have been dropped from the course {$course->name}",
+            'data' => json_encode([
+                'course_name' => $course->name,
+                'status' => 'dropped',
+            ]),
+        ]);
+
+        return response()->json(['message' => 'Student status updated to dropped successfully']);
+    }
+
+    // delete instructor course 
+    public function deleteInstructorCourse($courseId, $instructorId)
+    {
+        $course = Course::find($courseId);
+        $instructor = Instructor::find($instructorId);
+
+        if (!$course || !$instructor) {
+            return response()->json(['error' => 'Course or instructor not found'], 404);
+        }
+
+        if (!$course->instructors()->where('instructor_id', $instructorId)->exists()) {
+            return response()->json(['error' => 'Instructor is not assigned to this course'], 400);
+        }
+
+        $course->instructors()->updateExistingPivot($instructorId, [
+            'status' => 'dropped'
+        ]);
+
+        Notification::create([
+            'student_id' => null,
+            'instructor_id' => $instructor->id,
+            'course_id' => $course->id,
+            'type' => 'Warning',
+            'message' => "You have been dropped from the course {$course->name}",
+            'data' => json_encode([
+                'course_name' => $course->name,
+                'status' => 'dropped',
+            ]),
+        ]);
+
+        return response()->json(['message' => 'Instructor removed from course successfully']);
     }
 
     //generate a report for a specific student attendance 
@@ -666,24 +724,24 @@ class AdminController extends Controller
             'students.department',
             'instructors.user',
         ])->find($courseId);
-    
+
         if (!$course) {
             return response()->json(['error' => 'Course not found'], 404);
         }
-    
+
         $students = $course->students;
-        $instructor = $course->instructors->first(); 
-    
+        $instructor = $course->instructors->first();
+
         $reportData = [];
         $totalAbsencePercentage = 0;
-    
+
         foreach ($students as $student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })
                 ->get();
-    
+
             $absentCount = $attendanceRecords->where('is_present', false)->count();
 
             $absencePercentage = round($absentCount * 3.33, 2);
@@ -701,62 +759,92 @@ class AdminController extends Controller
             ];
         }
         $averageAbsence = count($students) ? round($totalAbsencePercentage / count($students), 2) : 0;
-    
+
         return Pdf::loadView('reports.CourseAttendanceReport', [
             'course' => $course,
-            'instructor' => $instructor, 
+            'instructor' => $instructor,
             'students' => $reportData,
             'averageAbsence' => $averageAbsence,
             'session' => $course->course_sessions->first(),
         ])->setPaper('A4', 'portrait')
-        ->download("attendance_report_{$course->Code}.pdf");
+            ->download("attendance_report_{$course->Code}.pdf");
     }
-// student Courses
-public function downloadStudentCoursesAttendanceReport($studentId)
-{
-    $student = Student::with(['user', 'department', 'courses.instructors.user'])->find($studentId);
+    // student Courses
+    public function downloadStudentCoursesAttendanceReport($studentId)
+    {
+        $student = Student::with(['user', 'department', 'courses.instructors.user'])->find($studentId);
 
-    if (!$student) {
-        return response()->json(['error' => 'Student not found'], 404);
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        $courses = $student->courses;
+        $reportData = [];
+        $totalAbsencePercentage = 0;
+
+        foreach ($courses as $course) {
+            $attendanceRecords = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                })
+                ->get();
+
+            $absentCount = $attendanceRecords->where('is_present', false)->count();
+            $absencePercentage = round($absentCount * 3.33, 2);
+            $totalAbsencePercentage += $absencePercentage;
+
+            // Check the status from the course_student pivot table
+            $courseStudentPivot = DB::table('course_student')
+                ->where('course_id', $course->id)
+                ->where('student_id', $student->id)
+                ->first();
+
+            // Set the course status based on the pivot table
+            $courseStatus = 'active'; 
+            if ($courseStudentPivot && $courseStudentPivot->status === 'dropped') {
+                $courseStatus = 'dropped';
+            }
+
+            // Check if the course has an instructor assigned and if the instructor is not dropped
+            $instructor = $course->instructors->first();
+
+            // If the instructor is assigned and not dropped, show their name
+            $instructorName = 'N/A';
+            if ($instructor) {
+                $instructorPivot = DB::table('course_instructor')
+                    ->where('course_id', $course->id)
+                    ->where('instructor_id', $instructor->id)
+                    ->first();
+
+                // Check the status of the instructor, if dropped, show 'Not Assigned Yet'
+                if ($instructorPivot && $instructorPivot->status != 'dropped') {
+                    $instructorName = optional($instructor->user)->first_name . ' ' . optional($instructor->user)->last_name;
+                } else {
+                    $instructorName = 'Not Assigned Yet';
+                }
+            }
+
+            $reportData[] = [
+                'course_code' => $course->Code,
+                'course_name' => $course->name,
+                'section' => $course->Section ?? 'N/A',
+                'credits' => $course->credits ?? 'N/A',
+                'instructor' => $instructorName,
+                'absence_percentage' => $absencePercentage,
+                'status' => $courseStatus,
+            ];
+        }
+
+        $averageAbsence = count($courses) ? round($totalAbsencePercentage / count($courses), 2) : 0;
+        $averageAttendance = round(100 - $averageAbsence, 2);
+
+        return PDF::loadView('reports.Student_Courses_AttendanceReport', [
+            'student' => $student,
+            'courses' => $reportData,
+            'averageAbsence' => $averageAbsence,
+            'averageAttendance' => $averageAttendance
+        ])
+            ->setPaper('A4', 'portrait')
+            ->download("student_attendance_report_{$student->student_id}.pdf");
     }
-
-    $courses = $student->courses;
-    $reportData = [];
-    $totalAbsencePercentage = 0;
-
-    foreach ($courses as $course) {
-        $attendanceRecords = Attendance::where('student_id', $student->id)
-            ->whereHas('course_session', function ($query) use ($course) {
-                $query->where('course_id', $course->id);
-            })
-            ->get();
-
-        $absentCount = $attendanceRecords->where('is_present', false)->count();
-        $absencePercentage = round($absentCount * 3.33, 2);
-        $totalAbsencePercentage += $absencePercentage;
-
-        $reportData[] = [
-            'course_code' => $course->Code,
-            'course_name' => $course->name,
-            'section' => $course->Section ?? 'N/A',
-            'credits' => $course->credits ?? 'N/A',
-            'instructor' => optional($course->instructors->first()?->user)->first_name . ' ' . optional($course->instructors->first()?->user)->last_name ?? 'N/A',
-            'absence_percentage' => $absencePercentage,
-            'status' => $absencePercentage >= 25 ? 'Risk of Drop ' : 'Safe',
-        ];
-    }
-
-    $averageAbsence = count($courses) ? round($totalAbsencePercentage / count($courses), 2) : 0;
-    $averageAttendance = round(100 - $averageAbsence, 2);
-
-    return PDF::loadView('reports.Student_Courses_AttendanceReport', [
-        'student' => $student,
-        'courses' => $reportData,
-        'averageAbsence' => $averageAbsence,
-        'averageAttendance' => $averageAttendance
-    ])
-    ->setPaper('A4', 'portrait')
-    ->download("student_attendance_report_{$student->student_id}.pdf");
-}
-
 }

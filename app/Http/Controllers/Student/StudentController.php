@@ -144,17 +144,32 @@ class StudentController extends Controller
             } elseif ($absencePercentage >= 20) {
                 $riskStatus = 'Risk of Drop';
             }
-
             return [
                 'course_id' => $course->id,
                 'course_name' => $course->name,
                 'course_code' => $course->Code ?? 'N/A',
-                'instructor_name' => optional($course->instructors->first())->user
-                    ? $course->instructors->first()->user->first_name . ' ' . $course->instructors->first()->user->last_name
-                    : 'No instructor assigned',
+                'instructor_name' => function() use ($course) {
+                    $instructor = $course->instructors->first();
+                    if ($instructor) {
+                        $instructorStatus = DB::table('course_instructor')
+                            ->where('course_id', $course->id)
+                            ->where('instructor_id', $instructor->id)
+                            ->value('status');
+            
+                        // Check if the instructor's status is 'dropped'
+                        if ($instructorStatus === 'dropped') {
+                            return 'Not Assigned Yet';
+                        }
+            
+                        // return the instructor's name
+                        return optional($instructor->user)->first_name . ' ' . optional($instructor->user)->last_name;
+                    }
+                    return 'No instructor assigned';
+                },
                 'absence_percentage' => $absencePercentage . '%',
                 'risk_status' => $riskStatus,
             ];
+            
         });
     
         return response()->json($coursesWithData->values());
@@ -420,7 +435,7 @@ class StudentController extends Controller
                     $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
                     $attendanceId = $attendances[$session->id]->id;
                 } else {
-                    $status = 'absent';
+                    $status = 'present';
                 }
             }
 
