@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\Instructor;
 use App\Models\User;
+use App\Models\Term;
 
 class AddCourseController extends Controller
 {
@@ -90,11 +91,51 @@ class AddCourseController extends Controller
         ]);
 
         $course->instructors()->attach($instructor->id);
+        $term = Term::whereDate('start_time', '<=', now())
+            ->whereDate('end_time', '>=', now())
+            ->first();
+
+        if ($term) {
+            $startDate = \Carbon\Carbon::parse($term->start_time);
+            $endDate = \Carbon\Carbon::parse($term->end_time);
+
+            $currentDate = $startDate->copy();
+
+            while ($currentDate->lte($endDate)) {
+                if ($this->matchesCourseDays($course->day_of_week, $currentDate)) {
+                    \App\Models\CourseSession::create([
+                        'course_id' => $course->id,
+                        'date' => $currentDate->format('Y-m-d'),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+
+                $currentDate->addDay();
+            }
+        }
+
 
         return response()->json([
             'message' => 'Course added successfully with instructor assigned',
             'course' => $course,
             'instructor' => $user
         ], 201);
+    }
+    private function matchesCourseDays(string $dayOfWeekString, \Carbon\Carbon $date): bool
+    {
+        $map = [
+            0 => 'U',  // Sunday
+            1 => 'M',
+            2 => 'T',
+            3 => 'W',
+            4 => 'R',
+            5 => 'F',
+            6 => 'S',  // Saturday
+        ];
+
+        $letter = $map[$date->dayOfWeek];
+
+        return str_contains($dayOfWeekString, $letter);
     }
 }

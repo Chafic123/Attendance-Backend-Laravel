@@ -420,7 +420,7 @@ class StudentController extends Controller
                     $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
                     $attendanceId = $attendances[$session->id]->id;
                 } else {
-                    $status = 'absent';
+                    $status = 'present';
                 }
             }
 
