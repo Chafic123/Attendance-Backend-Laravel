@@ -96,6 +96,9 @@ class AddCourseController extends Controller
             ->first();
 
         if ($term) {
+            // ✅ Attach course to term
+            $course->terms()->attach($term->id);
+
             $startDate = \Carbon\Carbon::parse($term->start_time);
             $endDate = \Carbon\Carbon::parse($term->end_time);
 
@@ -114,6 +117,7 @@ class AddCourseController extends Controller
                 $currentDate->addDay();
             }
         }
+
 
         return response()->json([
             'message' => 'Course added successfully with instructor assigned',
