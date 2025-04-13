@@ -321,7 +321,6 @@ class AdminController extends Controller
         ]);
     }
 
-
     // edit student 
 
     public function editStudent(Request $request, $studentId)
@@ -648,8 +647,6 @@ class AdminController extends Controller
             ]
         ], 200);
     }
-
-
 
     public function getCourseCalendar($courseId)
     {

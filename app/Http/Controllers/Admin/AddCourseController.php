@@ -117,8 +117,8 @@ class AddCourseController extends Controller
                 $currentDate->addDay();
             }
         }
-
-
+        
+        
         return response()->json([
             'message' => 'Course added successfully with instructor assigned',
             'course' => $course,
