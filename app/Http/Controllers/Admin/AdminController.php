@@ -193,7 +193,8 @@ class AdminController extends Controller
     
                 $absentCount = $attendanceRecords->where('is_present', false)
                 ->whereNotNull('is_present')
-                ->count();             $absencePercentage = round($absentCount * 3.33, 2);
+                ->count();             
+                $absencePercentage = round($absentCount * 3.33, 2);
             $riskStatus = $absencePercentage >= 25 ? 'Risk of drop' : 'Safe';
     
             return [

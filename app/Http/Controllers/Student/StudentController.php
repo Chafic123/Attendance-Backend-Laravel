@@ -87,7 +87,7 @@ class StudentController extends Controller
                     DB::table('course_student')
                         ->where('student_id', $student->id)
                         ->where('course_id', $course->id)
-                        ->update(['status' => 'active']);
+                        ->update(['status' => 'active']); 
                 }
             } else {
                 $newStatus = 'active';
