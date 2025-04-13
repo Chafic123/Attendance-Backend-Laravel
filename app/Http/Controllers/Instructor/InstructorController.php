@@ -210,7 +210,7 @@ class InstructorController extends Controller
                 ->count();                
             $absencePercentage = round($absentCount * 3.33, 2);
 
-            $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
+            $status = $absencePercentage >= 25 ? 'Dropped' : 'Safe';
 
             $studentsWithAttendance[] = [
                 'student_id' => $student->id,

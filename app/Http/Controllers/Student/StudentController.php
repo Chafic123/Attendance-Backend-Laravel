@@ -22,48 +22,50 @@ class StudentController extends Controller
     public function getCoursesForLoggedInStudent()
     {
         $user = Auth::user();
-    
+
         if (!$user instanceof \App\Models\User) {
             return response()->json(['error' => 'Invalid user type'], 404);
         }
-    
+
         $student = $user->student;
-    
+
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
-    
+
         $courses = $student->courses()->with('instructors.user')->get();
-    
+
         $filteredCourses = $courses->filter(function ($course) use ($student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })->get();
-    
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
+
+            $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();
             $absencePercentage = round($absentCount * 3.33, 2);
-    
+
             $currentStatus = DB::table('course_student')
                 ->where('student_id', $student->id)
                 ->where('course_id', $course->id)
                 ->value('status');
-    
+
             $newStatus = 'active';
             $riskStatus = 'Safe';
-    
+
             if ($absencePercentage >= 25) {
                 $newStatus = 'dropped';
                 $riskStatus = 'dropped';
-    
+
                 if ($currentStatus !== 'dropped') {
                     DB::table('course_student')
                         ->where('student_id', $student->id)
                         ->where('course_id', $course->id)
                         ->update(['status' => 'dropped']);
-    
+
                     $instructor = $course->instructors->first();
-    
+
                     Notification::create([
                         'student_id' => $student->id,
                         'instructor_id' => $instructor?->id,
@@ -77,11 +79,10 @@ class StudentController extends Controller
                         ],
                     ]);
                 }
-    
             } elseif ($absencePercentage >= 20) {
                 $newStatus = 'active';
                 $riskStatus = 'Risk of Drop';
-    
+
                 if ($currentStatus !== 'active') {
                     DB::table('course_student')
                         ->where('student_id', $student->id)
@@ -91,7 +92,7 @@ class StudentController extends Controller
             } else {
                 $newStatus = 'active';
                 $riskStatus = 'Safe';
-    
+
                 if ($currentStatus !== 'active') {
                     DB::table('course_student')
                         ->where('student_id', $student->id)
@@ -99,7 +100,7 @@ class StudentController extends Controller
                         ->update(['status' => 'active']);
                 }
             }
-    
+
             // Send warnings at 10%, 15%, 20%
             foreach ([10, 15, 20] as $threshold) {
                 if ($absencePercentage >= $threshold) {
@@ -108,7 +109,7 @@ class StudentController extends Controller
                         ->where('type', 'Warning')
                         ->where('data->percent', $threshold)
                         ->exists();
-    
+
                     if (!$exists && $course->instructors->first()) {
                         Notification::create([
                             'student_id' => $student->id,
@@ -134,10 +135,12 @@ class StudentController extends Controller
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })->get();
-    
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
+
+            $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();
             $absencePercentage = round($absentCount * 3.33, 2);
-    
+
             $riskStatus = 'Safe';
             if ($absencePercentage >= 25) {
                 $riskStatus = 'Dropped';
@@ -156,10 +159,10 @@ class StudentController extends Controller
                 'risk_status' => $riskStatus,
             ];
         });
-    
+
         return response()->json($coursesWithData->values());
     }
-    
+
     public function getNotificationsForLoggedInStudent(Request $request)
     {
         $student = Auth::user()->student;
@@ -333,12 +336,12 @@ class StudentController extends Controller
         }
 
         $scheduleReport = $student->courses()
-        ->wherePivot('status', '!=', 'dropped')
-        ->with([
-            'terms',
-            'instructors.user:id,first_name,last_name',
-        ])->get();
-    
+            ->wherePivot('status', '!=', 'dropped')
+            ->with([
+                'terms',
+                'instructors.user:id,first_name,last_name',
+            ])->get();
+
 
         $response = [
             'student' => [
@@ -441,62 +444,62 @@ class StudentController extends Controller
     public function requestCorrection(Request $request, $attendanceId)
     {
         $student = Auth::user()->student;
-    
+
         if (!$student) {
             return response()->json(['error' => 'Unauthorized request'], 403);
         }
-    
+
         $attendance = Attendance::where('id', $attendanceId)
             ->where('student_id', $student->id)
             ->first();
-    
+
         if (!$attendance) {
             return response()->json(['error' => 'Attendance record not found'], 404);
         }
-    
+
         $courseSession = CourseSession::find($attendance->course_session_id);
         if (!$courseSession) {
             return response()->json(['error' => 'Course session not found'], 404);
         }
-    
+
         $course = Course::find($courseSession->course_id);
         if (!$course) {
             return response()->json(['error' => 'Course not found'], 404);
         }
-    
+
         $instructor = $course->instructors()->first();
         if (!$instructor) {
             return response()->json(['error' => 'Instructor not found'], 404);
         }
-    
+
         if ($attendance->is_present) {
             return response()->json(['error' => 'Cannot request correction for present attendance'], 400);
         }
-    
+
         $attendanceDate = $attendance->created_at->format('Y-m-d');
-    
+
         $existingRequest = AttendanceRequest::where('student_id', $student->id)
             ->whereDate('request_date', $attendanceDate)
             ->first();
-    
+
         if ($existingRequest) {
             return response()->json(['error' => 'You have already submitted a correction request for this date'], 400);
         }
-    
+
         $existingRequest = AttendanceRequest::where('attendance_id', $attendance->id)
             ->where('student_id', $student->id)
             ->first();
-    
+
         if ($existingRequest) {
             if ($existingRequest->status === 'pending') {
                 return response()->json(['error' => 'Correction request already submitted'], 400);
             }
-    
+
             if ($existingRequest->status === 'rejected') {
                 return response()->json(['error' => 'Cannot resubmit request as the previous one was rejected'], 400);
             }
         }
-    
+
         AttendanceRequest::create([
             'student_id' => $student->id,
             'attendance_id' => $attendance->id,
@@ -506,10 +509,10 @@ class StudentController extends Controller
             'request_date' => now(),
             'status' => 'pending',
         ]);
-    
+
         return response()->json(['message' => 'Correction request submitted successfully']);
     }
-    
+
 
     public function deleteStudentImage()
     {
@@ -585,20 +588,20 @@ class StudentController extends Controller
     public function downloadScheduleReport()
     {
         $student = Auth::user()->student;
-    
+
         if (!$student) {
             return response()->json(['error' => 'Student not logged in'], 401);
         }
-    
+
         // Get only courses where the pivot status is not 'dropped'
         $scheduleReport = $student->courses()
-            ->wherePivot('status', '!=', 'dropped') 
+            ->wherePivot('status', '!=', 'dropped')
             ->with([
                 'terms',
                 'instructors.user:id,first_name,last_name',
             ])
             ->get();
-    
+
         $studentData = [
             'student_id' => $student->student_id,
             'first_name' => $student->user->first_name,
@@ -608,7 +611,7 @@ class StudentController extends Controller
             'phone' => $student->phone_number,
             'major' => $student->major,
         ];
-    
+
         $coursesData = $scheduleReport->map(function ($course) {
             return [
                 'course_name' => $course->name,
@@ -630,13 +633,12 @@ class StudentController extends Controller
                 }),
             ];
         });
-    
+
         $pdf = Pdf::loadView('reports.StudentSchedule', [
             'student' => $studentData,
             'courses' => $coursesData,
         ])->setPaper('a4', 'landscape');
-    
+
         return $pdf->download('schedule_report.pdf');
     }
-    
 }
