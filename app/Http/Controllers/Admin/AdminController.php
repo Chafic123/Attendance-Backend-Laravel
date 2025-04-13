@@ -277,23 +277,25 @@ class AdminController extends Controller
     public function getNotEnrolledStudents($courseId)
     {
         $course = Course::find($courseId);
-    
+        
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-    
-        // Only get students with 'active' status in the pivot table
+        
+        // Get active enrolled student IDs
         $enrolledStudentIds = $course->students()
             ->wherePivot('status', 'active')
-            ->pluck('students.id')
+            ->pluck('students.id') // Ensure that this properly references students' id
             ->toArray();
-    
-        $notEnrolledStudents = Student::whereNotIn('id', $enrolledStudentIds)
+        
+        // Get students not enrolled in the course
+        $notEnrolledStudents = Student::whereNotIn('students.id', $enrolledStudentIds) // Fully qualify the 'students.id'
             ->with([
                 'user:id,first_name,last_name,email',
                 'department:id,name'
             ])
-            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id');
+            ->select('students.id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id') // Fully qualify here as well
+            ->get(); // Execute the query to get results
     
         return response()->json($notEnrolledStudents);
     }
