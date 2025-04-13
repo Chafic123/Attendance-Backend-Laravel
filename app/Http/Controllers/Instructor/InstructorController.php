@@ -167,7 +167,7 @@ class InstructorController extends Controller
                     'type' => 'Warning',
                     'message' => "Your attendance request was rejected.",
                     'data' => [
-                        'date' => now()->toDateTimeString("Y-m-d"),
+                        'date' => now()->format("Y-m-d"),
                         'status' => 'rejected',
                         'course_name' => $course->name,
                     ],
@@ -188,16 +188,16 @@ class InstructorController extends Controller
         }
 
         $students = $course->students()
-        ->wherePivot('status', '!=', 'dropped') 
-        ->with([
-            'user:id,first_name,last_name',
-            'attendance.course_session' => function ($query) use ($course) {
-                $query->where('course_id', $course->id);
-            }
-        ])
-        
-        ->get();
-            $studentsWithAttendance = [];
+            ->wherePivot('status', '!=', 'dropped')
+            ->with([
+                'user:id,first_name,last_name',
+                'attendance.course_session' => function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                }
+            ])
+
+            ->get();
+        $studentsWithAttendance = [];
 
         foreach ($students as $student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
@@ -205,9 +205,9 @@ class InstructorController extends Controller
                     $query->where('course_id', $course->id);
                 })->get();
 
-                $absentCount = $attendanceRecords->where('is_present', false)
+            $absentCount = $attendanceRecords->where('is_present', false)
                 ->whereNotNull('is_present')
-                ->count();                
+                ->count();
             $absencePercentage = round($absentCount * 3.33, 2);
 
             $status = $absencePercentage >= 25 ? 'Dropped' : 'Safe';
@@ -492,53 +492,53 @@ class InstructorController extends Controller
         ]);
     }
 
-public function getStudentCalendar($studentId, $courseId)
-{
-    // Check if the student is enrolled and not dropped
-    $isEnrolled = DB::table('course_student')
-        ->where('course_id', $courseId)
-        ->where('student_id', $studentId)
-        ->where('status', '!=', 'dropped') // only allow non-dropped students
-        ->exists();
+    public function getStudentCalendar($studentId, $courseId)
+    {
+        // Check if the student is enrolled and not dropped
+        $isEnrolled = DB::table('course_student')
+            ->where('course_id', $courseId)
+            ->where('student_id', $studentId)
+            ->where('status', '!=', 'dropped') // only allow non-dropped students
+            ->exists();
 
-    if (!$isEnrolled) {
-        return response()->json(['message' => 'Student not enrolled in this course or has dropped it.'], 403);
-    }
-
-    $today = Carbon::today()->startOfDay();
-
-    $sessions = CourseSession::where('course_id', $courseId)
-        ->orderBy('date')
-        ->get();
-
-    $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
-        ->where('student_id', $studentId)
-        ->get()
-        ->keyBy('course_session_id');
-
-    $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
-        $sessionDate = Carbon::parse($session->date)->startOfDay();
-        $status = 'upcoming';
-        $attendanceId = null;
-
-        if ($sessionDate->lte($today)) {
-            if ($attendances->has($session->id)) {
-                $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
-                $attendanceId = $attendances[$session->id]->id;
-            } else {
-                $status = 'upcoming';
-            }
+        if (!$isEnrolled) {
+            return response()->json(['message' => 'Student not enrolled in this course or has dropped it.'], 403);
         }
 
-        return [
-            'id'     => $attendanceId,
-            'date'   => $session->date,
-            'status' => $status,
-        ];
-    });
+        $today = Carbon::today()->startOfDay();
 
-    return response()->json($calendarData);
-}
+        $sessions = CourseSession::where('course_id', $courseId)
+            ->orderBy('date')
+            ->get();
+
+        $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+            ->where('student_id', $studentId)
+            ->get()
+            ->keyBy('course_session_id');
+
+        $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
+            $sessionDate = Carbon::parse($session->date)->startOfDay();
+            $status = 'upcoming';
+            $attendanceId = null;
+
+            if ($sessionDate->lte($today)) {
+                if ($attendances->has($session->id)) {
+                    $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
+                    $attendanceId = $attendances[$session->id]->id;
+                } else {
+                    $status = 'upcoming';
+                }
+            }
+
+            return [
+                'id'     => $attendanceId,
+                'date'   => $session->date,
+                'status' => $status,
+            ];
+        });
+
+        return response()->json($calendarData);
+    }
 
 
     //list read notifcations for instructor 
@@ -620,28 +620,28 @@ public function getStudentCalendar($studentId, $courseId)
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-    
+
         $student = $course->students()->wherePivot('status', '!=', 'dropped')->with(['user', 'department'])->where('students.id', $studentId)->first();
         if (!$student) {
             return response()->json(['message' => 'Student not enrolled in this course or has dropped it'], 404);
         }
-    
+
         // Get attendance records for the student that are marked as absent
         $attendanceRecords = Attendance::where('student_id', $student->id)
             ->where('is_present', false)
             ->whereHas('course_session', function ($query) use ($course) {
                 $query->where('course_id', $course->id);
             })
-            ->with('course_session') 
+            ->with('course_session')
             ->get();
-    
+
         $absentCount = $attendanceRecords->count();
-        $absencePercentage = round($absentCount * 3.33, 2); 
-    
+        $absencePercentage = round($absentCount * 3.33, 2);
+
         $status = $absencePercentage >= 25 ? 'Drop Risk' : 'Safe';
-    
+
         $instructor = $course->instructors->first();
-    
+
         return Pdf::loadView('reports.StudentCourseAttendanceReport', [
             'course' => $course,
             'student' => $student,
@@ -651,8 +651,7 @@ public function getStudentCalendar($studentId, $courseId)
             'status' => $status,
             'instructor' => $instructor,
         ])
-        ->setPaper('A4', 'portrait') 
-        ->download("attendance_report_{$student->student_id}_{$course->Code}.pdf"); 
+            ->setPaper('A4', 'portrait')
+            ->download("attendance_report_{$student->student_id}_{$course->Code}.pdf");
     }
-    
 }
