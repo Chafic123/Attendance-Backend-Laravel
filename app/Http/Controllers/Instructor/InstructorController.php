@@ -79,38 +79,6 @@ class InstructorController extends Controller
         ]);
     }
 
-    // Update request correction 
-    // public function updateRequestStatus(Request $request, $requestId)
-    // {
-    //     $instructor = Auth::user()->instructor;
-
-    //     if (!$instructor) {
-    //         return response()->json(['error' => 'Unauthorized request'], 403);
-    //     }
-
-    //     $request->validate([
-    //         'status' => 'required|in:approved,rejected',
-    //     ]);
-
-    //     $attendanceRequest = AttendanceRequest::with('attendance')->find($requestId);
-
-    //     if (!$attendanceRequest || $attendanceRequest->instructor_id !== $instructor->id) {
-    //         return response()->json(['error' => 'Request not found or unauthorized'], 404);
-    //     }
-
-    //     if ($request->status === 'approved') {
-
-    //         if ($attendanceRequest->attendance) {
-    //             $attendanceRequest->attendance->update(['is_present' => true]);
-    //         }
-    //     }
-
-    //     $attendanceRequest->update(['status' => $request->status]);
-
-    //     return response()->json(['message' => 'Attendance request ' . $request->status . ' successfully']);
-    // }
-
-
     //tester
     public function updateRequestStatus(Request $request, $requestId)
     {
@@ -219,8 +187,16 @@ class InstructorController extends Controller
             return $returnJson ? response()->json(['message' => 'Course not found'], 404) : [];
         }
 
-        $students = $course->students()->with('user:id,first_name,last_name')->get();
-        $studentsWithAttendance = [];
+        $students = $course->students()
+        ->wherePivot('status', '!=', 'dropped') 
+        ->with([
+            'user:id,first_name,last_name',
+            'attendances.course_session' => function ($query) use ($course) {
+                $query->where('course_id', $course->id);
+            }
+        ])
+        ->get();
+            $studentsWithAttendance = [];
 
         foreach ($students as $student) {
             $attendanceRecords = Attendance::where('student_id', $student->id)
@@ -513,42 +489,54 @@ class InstructorController extends Controller
         ]);
     }
 
-    public function getStudentCalendar($studentId, $courseId)
-    {
-        $today = Carbon::today()->startOfDay();
+public function getStudentCalendar($studentId, $courseId)
+{
+    // Check if the student is enrolled and not dropped
+    $isEnrolled = DB::table('course_student')
+        ->where('course_id', $courseId)
+        ->where('student_id', $studentId)
+        ->where('status', '!=', 'dropped') // only allow non-dropped students
+        ->exists();
 
-        $sessions = CourseSession::where('course_id', $courseId)
-            ->orderBy('date')
-            ->get();
-
-        $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
-            ->where('student_id', $studentId)
-            ->get()
-            ->keyBy('course_session_id');
-
-        $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
-            $sessionDate = Carbon::parse($session->date)->startOfDay();
-            $status = 'upcoming';
-            $attendanceId = null;
-
-            if ($sessionDate->lte($today)) {
-                if ($attendances->has($session->id)) {
-                    $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
-                    $attendanceId = $attendances[$session->id]->id;
-                } else {
-                    $status = 'absent';
-                }
-            }
-
-            return [
-                'id'     => $attendanceId,
-                'date'   => $session->date,
-                'status' => $status,
-            ];
-        });
-
-        return response()->json($calendarData);
+    if (!$isEnrolled) {
+        return response()->json(['message' => 'Student not enrolled in this course or has dropped it.'], 403);
     }
+
+    $today = Carbon::today()->startOfDay();
+
+    $sessions = CourseSession::where('course_id', $courseId)
+        ->orderBy('date')
+        ->get();
+
+    $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
+        ->where('student_id', $studentId)
+        ->get()
+        ->keyBy('course_session_id');
+
+    $calendarData = $sessions->map(function ($session) use ($attendances, $today) {
+        $sessionDate = Carbon::parse($session->date)->startOfDay();
+        $status = 'upcoming';
+        $attendanceId = null;
+
+        if ($sessionDate->lte($today)) {
+            if ($attendances->has($session->id)) {
+                $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
+                $attendanceId = $attendances[$session->id]->id;
+            } else {
+                $status = 'upcoming';
+            }
+        }
+
+        return [
+            'id'     => $attendanceId,
+            'date'   => $session->date,
+            'status' => $status,
+        ];
+    });
+
+    return response()->json($calendarData);
+}
+
 
     //list read notifcations for instructor 
     public function notificationsRead()
@@ -582,7 +570,7 @@ class InstructorController extends Controller
             return response()->json(['error' => 'Course not found'], 404);
         }
 
-        $students = $course->students;
+        $students = $course->students()->wherePivot('status', '!=', 'dropped')->get();
         $instructor = $course->instructors->first();
 
         $reportData = [];
@@ -629,27 +617,28 @@ class InstructorController extends Controller
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-
-        $student = $course->students()->with(['user', 'department'])->where('students.id', $studentId)->first();
+    
+        $student = $course->students()->wherePivot('status', '!=', 'dropped')->with(['user', 'department'])->where('students.id', $studentId)->first();
         if (!$student) {
-            return response()->json(['message' => 'Student not enrolled in this course'], 404);
+            return response()->json(['message' => 'Student not enrolled in this course or has dropped it'], 404);
         }
-
+    
+        // Get attendance records for the student that are marked as absent
         $attendanceRecords = Attendance::where('student_id', $student->id)
             ->where('is_present', false)
             ->whereHas('course_session', function ($query) use ($course) {
                 $query->where('course_id', $course->id);
             })
-            ->with('course_session')
+            ->with('course_session') 
             ->get();
-
-
-        $absentCount = $attendanceRecords->where('is_present', false)->count();
-        $absencePercentage = round($absentCount * 3.33, 2);
+    
+        $absentCount = $attendanceRecords->count();
+        $absencePercentage = round($absentCount * 3.33, 2); 
+    
         $status = $absencePercentage >= 25 ? 'Drop Risk' : 'Safe';
-
+    
         $instructor = $course->instructors->first();
-
+    
         return Pdf::loadView('reports.StudentCourseAttendanceReport', [
             'course' => $course,
             'student' => $student,
@@ -659,7 +648,8 @@ class InstructorController extends Controller
             'status' => $status,
             'instructor' => $instructor,
         ])
-            ->setPaper('A4', 'portrait')
-            ->download("attendance_report_{$student->student_id}_{$course->Code}.pdf");
+        ->setPaper('A4', 'portrait') 
+        ->download("attendance_report_{$student->student_id}_{$course->Code}.pdf"); 
     }
+    
 }

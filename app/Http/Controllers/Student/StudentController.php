@@ -333,10 +333,12 @@ class StudentController extends Controller
         }
 
         $scheduleReport = $student->courses()
-            ->with([
-                'terms',
-                'instructors.user:id,first_name,last_name',
-            ])->get();
+        ->wherePivot('status', '!=', 'dropped')
+        ->with([
+            'terms',
+            'instructors.user:id,first_name,last_name',
+        ])->get();
+    
 
         $response = [
             'student' => [
@@ -354,6 +356,7 @@ class StudentController extends Controller
                     'course_code' => $course->Code ?? 'N/A',
                     'room_name' => $course->Room ?? 'N/A',
                     'day_of_week' => str_split($course->day_of_week),
+                    'credits' => $course->credits ?? 'N/A',
                     'section_name' => $course->Section ?? 'N/A',
                     'time_start' => $course->start_time,
                     'time_end' => $course->end_time,
@@ -420,7 +423,7 @@ class StudentController extends Controller
                     $status = $attendances[$session->id]->is_present ? 'present' : 'absent';
                     $attendanceId = $attendances[$session->id]->id;
                 } else {
-                    $status = 'present';
+                    $status = 'null';
                 }
             }
 
@@ -582,18 +585,20 @@ class StudentController extends Controller
     public function downloadScheduleReport()
     {
         $student = Auth::user()->student;
-
+    
         if (!$student) {
             return response()->json(['error' => 'Student not logged in'], 401);
         }
-
+    
+        // Get only courses where the pivot status is not 'dropped'
         $scheduleReport = $student->courses()
+            ->wherePivot('status', '!=', 'dropped') 
             ->with([
                 'terms',
                 'instructors.user:id,first_name,last_name',
             ])
             ->get();
-
+    
         $studentData = [
             'student_id' => $student->student_id,
             'first_name' => $student->user->first_name,
@@ -603,7 +608,7 @@ class StudentController extends Controller
             'phone' => $student->phone_number,
             'major' => $student->major,
         ];
-
+    
         $coursesData = $scheduleReport->map(function ($course) {
             return [
                 'course_name' => $course->name,
@@ -625,12 +630,13 @@ class StudentController extends Controller
                 }),
             ];
         });
-
+    
         $pdf = Pdf::loadView('reports.StudentSchedule', [
             'student' => $studentData,
             'courses' => $coursesData,
         ])->setPaper('a4', 'landscape');
-
+    
         return $pdf->download('schedule_report.pdf');
     }
+    
 }

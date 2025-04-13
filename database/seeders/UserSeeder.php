@@ -33,7 +33,6 @@ class UserSeeder extends Seeder
         // ]);
         // Instructor::create([
         //     'user_id' => $instructor->id,
-        //     'username' => 'Roaa',
         //     'phone_number' => '81657588',
         //     'image' => 'default.png',
         //     'department_id' => 3,
