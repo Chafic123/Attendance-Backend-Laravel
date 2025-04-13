@@ -162,8 +162,6 @@ class AdminController extends Controller
     }
 
 
-
-
     /**
      * Get courses for a specific student, including instructor details.
      */
@@ -193,8 +191,9 @@ class AdminController extends Controller
                 })
                 ->get();
     
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
-            $absencePercentage = round($absentCount * 3.33, 2);
+                $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();             $absencePercentage = round($absentCount * 3.33, 2);
             $riskStatus = $absencePercentage >= 25 ? 'Risk of drop' : 'Safe';
     
             return [
