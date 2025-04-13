@@ -170,51 +170,33 @@ class AdminController extends Controller
     public function getCoursesForStudent($studentId)
     {
         $student = Student::find($studentId);
-
+    
         if (!$student) {
             return response()->json(['message' => 'Student not found'], 404);
         }
-
+    
+        // Retrieve active courses only
         $courses = $student->courses()
             ->withPivot('status')
+            ->wherePivot('status', 'active') // Filter to get only active courses
             ->with(['instructors.user' => function ($query) {
                 $query->select('users.id', 'users.first_name', 'users.last_name');
             }])
             ->get();
-
+    
+        // Map the courses to the desired structure
         $coursesWithInstructors = $courses->map(function ($course) use ($student) {
-            // Check the course status for the student from the pivot table
-            $status = $course->pivot->status; // 'active' or 'dropped'
-
-            if ($status === 'dropped') {
-                // Skip attendance calculation for dropped courses
-                return [
-                    'id' => $course->id,
-                    'course_code' => $course->Code,
-                    'course_name' => $course->name,
-                    'section' => $course->Section,
-                    'course_status' => $status,
-                    'instructors' => $course->instructors->map(function ($instructor) {
-                        return [
-                            'instructor_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name
-                        ];
-                    }),
-                    'absence_percentage' => 'Dropped', // No absence data for dropped courses
-                    'status' => 'dropped', // Mark as Dropped
-                ];
-            }
-
-            // Calculate attendance and risk status only for active courses
+            // Calculate attendance for active courses
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })
                 ->get();
-
+    
             $absentCount = $attendanceRecords->where('is_present', false)->count();
             $absencePercentage = round($absentCount * 3.33, 2);
             $riskStatus = $absencePercentage >= 25 ? 'Risk of drop' : 'Safe';
-
+    
             return [
                 'id' => $course->id,
                 'course_code' => $course->Code,
@@ -230,7 +212,7 @@ class AdminController extends Controller
                 'status' => $riskStatus,
             ];
         });
-
+    
         return response()->json($coursesWithInstructors);
     }
 
