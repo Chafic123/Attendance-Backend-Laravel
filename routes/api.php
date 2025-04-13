@@ -72,6 +72,9 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->prefix('admin')->group(functi
     Route::get('/courses/{courseId}/attendance-report', [AdminController::class, 'downloadCourseAttendanceReport'])
         ->name('admin.course.attendance.report.download');
     Route::get('/reports/student-attendance/{studentId}', [AdminController::class, 'downloadStudentCoursesAttendanceReport']);
+    //not renrolled students 
+    Route::get('/courses/{courseId}/Not-Enrolled-students', [AdminController::class, 'getNotEnrolledStudents'])
+        ->name('admin.students.not-renrolled');
 });
 
 // Instructor Routes (Only Instructors Can Access)

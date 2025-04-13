@@ -273,6 +273,28 @@ class AdminController extends Controller
         ]);
     }
 
+    // not enrolled students in this course api 
+    public function getNotEnrolledStudents($courseId)
+    {
+        $course = Course::find($courseId);
+
+        if (!$course) {
+            return response()->json(['message' => 'Course not found'], 404);
+        }
+
+        $enrolledStudentIds = $course->students()->pluck('students.id')->toArray();
+
+        $notEnrolledStudents = Student::whereNotIn('id', $enrolledStudentIds)
+            ->with([
+                'user:id,first_name,last_name,email',
+                'department:id,name'
+            ])
+            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id');
+
+        return response()->json($notEnrolledStudents);
+    }
+
+
     public function updateProfile(Request $request)
     {
         $admin = Auth::user()->admin;
@@ -483,7 +505,6 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Students enrolled and attendance records created successfully']);
     }
-
 
     //Enroll Instructor 
     public function enrollInstructors(Request $request)
@@ -707,22 +728,22 @@ class AdminController extends Controller
     {
         $course = Course::find($courseId);
         $student = Student::find($studentId);
-    
+
         if (!$course || !$student) {
             return response()->json(['error' => 'Course or student not found'], 404);
         }
-    
+
         $enrollment = $course->students()->where('students.id', $studentId)->first();
         if (!$enrollment || $enrollment->pivot->status === 'dropped') {
             return response()->json(['error' => 'Student is dropped from the course'], 400);
         }
-    
+
         $sessions = CourseSession::where('course_id', $courseId)->get();
         $attendances = Attendance::whereIn('course_session_id', $sessions->pluck('id'))
             ->where('student_id', $studentId)
             ->get()
             ->keyBy('course_session_id');
-    
+
         $attendanceReport = $sessions->map(function ($session) use ($attendances) {
             $attendance = $attendances->get($session->id);
             return [
@@ -731,14 +752,14 @@ class AdminController extends Controller
                 'attendance_id' => $attendance ? $attendance->id : null,
             ];
         });
-    
+
         return response()->json([
             'course_id' => $courseId,
             'student_id' => $studentId,
             'attendance_report' => $attendanceReport
         ]);
     }
-    
+
 
     // Attendance report for students in course
     public function downloadCourseAttendanceReport($courseId)
