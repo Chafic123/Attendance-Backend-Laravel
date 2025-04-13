@@ -102,66 +102,51 @@ class AdminController extends Controller
     public function getAllAdminStudentsCourse($courseId)
     {
         $course = Course::find($courseId);
-
+    
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-
-        $students = $course->students()->with('user:id,first_name,last_name,email')->get();
-
+    
+        // Only get students who are NOT dropped
+        $students = $course->students()
+            ->wherePivot('status', '!=', 'dropped')
+            ->with(['user:id,first_name,last_name,email', 'department:id,name'])
+            ->get();
+    
         $students = $students->map(function ($student) use ($course) {
-            // Check if the student is dropped from the course
-            $pivot = $course->students()->where('students.id', $student->id)->first()->pivot;
-            $status = $pivot->status ?? 'active';
-
-            if ($status === 'dropped') {
-                return [
-                    'id'               => $student->id,
-                    'user_id'          => $student->user_id,
-                    'student_id'       => $student->student_id,
-                    'first_name'       => optional($student->user)->first_name,
-                    'last_name'        => optional($student->user)->last_name,
-                    'email'            => optional($student->user)->email,
-                    'department'       => optional($student->department)->name,
-                    'major'            => $student->major,
-                    'image'            => $student->image,
-                    'status'           => 'dropped',
-                    'absence_percentage' => 'Dropped', // No absence data for dropped students
-                ];
-            }
-
             // Fetch attendance records for non-dropped students
             $attendanceRecords = Attendance::where('student_id', $student->id)
                 ->whereHas('course_session', function ($query) use ($course) {
                     $query->where('course_id', $course->id);
                 })
                 ->get();
-
-            // Calculate absent count and absence percentage
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
+    
+            // Count only attendances where is_present is explicitly false
+            $absentCount = $attendanceRecords->where('is_present', false)
+            ->whereNotNull('is_present')
+            ->count();
+    
             $absencePercentage = round($absentCount * 3.33, 2);
-
             $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
-
+    
             return [
-                'id'               => $student->id,
-                'user_id'          => $student->user_id,
-                'student_id'       => $student->student_id,
-                'first_name'       => optional($student->user)->first_name,
-                'last_name'        => optional($student->user)->last_name,
-                'email'            => optional($student->user)->email,
-                'department'       => optional($student->department)->name,
-                'major'            => $student->major,
-                'image'            => $student->image,
+                'id'                 => $student->id,
+                'user_id'            => $student->user_id,
+                'student_id'         => $student->student_id,
+                'first_name'         => optional($student->user)->first_name,
+                'last_name'          => optional($student->user)->last_name,
+                'email'              => optional($student->user)->email,
+                'department'         => optional($student->department)->name,
+                'major'              => $student->major,
+                'image'              => $student->image,
                 'absence_percentage' => $absencePercentage . '%',
-                'status'           => $status,
+                'status'             => $status,
             ];
         });
-
+    
         return response()->json($students);
     }
-
-
+    
     /**
      * Get courses for a specific student, including instructor details.
      */
