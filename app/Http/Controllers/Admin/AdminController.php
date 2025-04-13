@@ -111,7 +111,7 @@ class AdminController extends Controller
 
         $students = $students->map(function ($student) use ($course) {
             // Check if the student is dropped from the course
-            $pivot = $course->students()->where('student_id', $student->id)->first()->pivot;
+            $pivot = $course->students()->where('students.id', $student->id)->first()->pivot;
             $status = $pivot->status ?? 'active';
 
             if ($status === 'dropped') {

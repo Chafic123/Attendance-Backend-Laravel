@@ -191,10 +191,11 @@ class InstructorController extends Controller
         ->wherePivot('status', '!=', 'dropped') 
         ->with([
             'user:id,first_name,last_name',
-            'attendances.course_session' => function ($query) use ($course) {
+            'attendance.course_session' => function ($query) use ($course) {
                 $query->where('course_id', $course->id);
             }
         ])
+        
         ->get();
             $studentsWithAttendance = [];
 
