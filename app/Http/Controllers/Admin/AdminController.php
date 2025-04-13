@@ -288,14 +288,24 @@ class AdminController extends Controller
             ->pluck('students.id') // Ensure that this properly references students' id
             ->toArray();
         
-        // Get students not enrolled in the course
-        $notEnrolledStudents = Student::whereNotIn('students.id', $enrolledStudentIds) // Fully qualify the 'students.id'
-            ->with([
-                'user:id,first_name,last_name,email',
-                'department:id,name'
-            ])
-            ->select('students.id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id') // Fully qualify here as well
-            ->get(); // Execute the query to get results
+        // If there are no enrolled students, retrieve all students
+        if (empty($enrolledStudentIds)) {
+            $notEnrolledStudents = Student::with([
+                    'user:id,first_name,last_name,email',
+                    'department:id,name'
+                ])
+                ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id')
+                ->get(); // Get all students
+        } else {
+            // Get students not enrolled in the course
+            $notEnrolledStudents = Student::whereNotIn('id', $enrolledStudentIds) // Assuming we corrected the column name
+                ->with([
+                    'user:id,first_name,last_name,email',
+                    'department:id,name'
+                ])
+                ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id')
+                ->get(); // Execute the query to get results
+        }
     
         return response()->json($notEnrolledStudents);
     }
