@@ -444,74 +444,59 @@ class StudentController extends Controller
     public function requestCorrection(Request $request, $attendanceId)
     {
         $student = Auth::user()->student;
-
+    
         if (!$student) {
             return response()->json(['error' => 'Unauthorized request'], 403);
         }
-
+    
         $attendance = Attendance::where('id', $attendanceId)
             ->where('student_id', $student->id)
             ->first();
-
+    
         if (!$attendance) {
             return response()->json(['error' => 'Attendance record not found'], 404);
         }
-
+    
         $courseSession = CourseSession::find($attendance->course_session_id);
         if (!$courseSession) {
             return response()->json(['error' => 'Course session not found'], 404);
         }
-
+    
         $course = Course::find($courseSession->course_id);
         if (!$course) {
             return response()->json(['error' => 'Course not found'], 404);
         }
-
+    
         $instructor = $course->instructors()->first();
         if (!$instructor) {
             return response()->json(['error' => 'Instructor not found'], 404);
         }
-
+    
         if ($attendance->is_present) {
             return response()->json(['error' => 'Cannot request correction for present attendance'], 400);
         }
-
-        $attendanceDate = $attendance->created_at->format('Y-m-d');
-
-        $existingRequest = AttendanceRequest::where('student_id', $student->id)
-            ->whereDate('request_date', $attendanceDate)
-            ->first();
-
-        if ($existingRequest) {
-            return response()->json(['error' => 'You have already submitted a correction request for this date'], 400);
-        }
-
+    
         $existingRequest = AttendanceRequest::where('attendance_id', $attendance->id)
             ->where('student_id', $student->id)
             ->first();
-
+    
         if ($existingRequest) {
-            if ($existingRequest->status === 'pending') {
-                return response()->json(['error' => 'Correction request already submitted'], 400);
-            }
-
-            if ($existingRequest->status === 'rejected') {
-                return response()->json(['error' => 'Cannot resubmit request as the previous one was rejected'], 400);
-            }
+            return response()->json(['error' => 'You have already submitted a correction request for this attendance record'], 400);
         }
-
+    
         AttendanceRequest::create([
-            'student_id' => $student->id,
-            'attendance_id' => $attendance->id,
-            'course_id' => $courseSession->course_id,
-            'instructor_id' => $instructor->id,
-            'reason' => $request->input('reason'),
-            'request_date' => now(),
-            'status' => 'pending',
+            'student_id'     => $student->id,
+            'attendance_id'  => $attendance->id,
+            'course_id'      => $courseSession->course_id,
+            'instructor_id'  => $instructor->id,
+            'reason'         => $request->input('reason'),
+            'request_date'   => now(),
+            'status'         => 'pending',
         ]);
-
+    
         return response()->json(['message' => 'Correction request submitted successfully']);
     }
+    
 
 
     public function deleteStudentImage()

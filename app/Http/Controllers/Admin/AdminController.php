@@ -322,7 +322,7 @@ class AdminController extends Controller
     }
 
 
-    // EditStudent 
+    // edit student 
 
     public function editStudent(Request $request, $studentId)
     {
@@ -552,7 +552,7 @@ class AdminController extends Controller
             return response()->json(['message' => 'Course not found.'], 404);
         }
 
-        // Check for room-time conflict (exc-luding the current course)
+        // Check for room-time conflict (excluding the current course)
         $conflict = Course::where('Room', $request->room)
             ->where('day_of_week', $request->day_of_week)
             ->where('id', '!=', $courseId)
@@ -579,7 +579,7 @@ class AdminController extends Controller
             return response()->json(['message' => 'Instructor not found for this user.'], 404);
         }
 
-        $course->update([
+        $course->fill([
             'Code' => $request->Code,
             'name' => $request->name,
             'start_time' => $request->start_time,
@@ -590,31 +590,50 @@ class AdminController extends Controller
             'credit' => $request->credits,
         ]);
 
+        $wasDayChanged = $course->isDirty('day_of_week');
+        $course->save();
+
         $course->instructors()->sync([$instructor->id]);
 
-        // Re-generate CourseSessions if day_of_week or time changed
+        // Update CourseSessions if term exists
         $term = Term::whereDate('start_time', '<=', now())
             ->whereDate('end_time', '>=', now())
             ->first();
 
-        if ($term) {
-            // Delete old sessions
-            \App\Models\CourseSession::where('course_id', $course->id)->delete();
-
+        if ($wasDayChanged && $term) {
             $startDate = \Carbon\Carbon::parse($term->start_time);
             $endDate = \Carbon\Carbon::parse($term->end_time);
             $currentDate = $startDate->copy();
 
+            // Get all current sessions for the course
+            $existingSessions = \App\Models\CourseSession::where('course_id', $course->id)->get();
+            $newDates = [];
+
             while ($currentDate->lte($endDate)) {
                 if ($this->matchesCourseDays($course->day_of_week, $currentDate)) {
-                    \App\Models\CourseSession::create([
-                        'course_id' => $course->id,
-                        'date' => $currentDate->format('Y-m-d'),
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
+                    $newDates[] = $currentDate->copy();
                 }
                 $currentDate->addDay();
+            }
+
+            // Update existing sessions' dates
+            foreach ($existingSessions as $index => $session) {
+                if (isset($newDates[$index])) {
+                    $session->update([
+                        'date' => $newDates[$index]->format('Y-m-d'),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            // Create new sessions if more dates are needed
+            for ($i = count($existingSessions); $i < count($newDates); $i++) {
+                \App\Models\CourseSession::create([
+                    'course_id' => $course->id,
+                    'date' => $newDates[$i]->format('Y-m-d'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
         }
 
@@ -629,6 +648,8 @@ class AdminController extends Controller
             ]
         ], 200);
     }
+
+
 
     public function getCourseCalendar($courseId)
     {
