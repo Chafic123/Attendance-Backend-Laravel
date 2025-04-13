@@ -205,7 +205,9 @@ class InstructorController extends Controller
                     $query->where('course_id', $course->id);
                 })->get();
 
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
+                $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();                
             $absencePercentage = round($absentCount * 3.33, 2);
 
             $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
