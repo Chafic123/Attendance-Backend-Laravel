@@ -19,6 +19,7 @@ use App\Models\Instructor;
 use App\Models\Admin;
 use App\Models\Attendance;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Term;
 
 class AdminController extends Controller
 {
@@ -102,17 +103,17 @@ class AdminController extends Controller
     public function getAllAdminStudentsCourse($courseId)
     {
         $course = Course::find($courseId);
-    
+
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-    
+
         // Only get students who are NOT dropped
         $students = $course->students()
             ->wherePivot('status', '!=', 'dropped')
             ->with(['user:id,first_name,last_name,email', 'department:id,name'])
             ->get();
-    
+
         $students = $students->map(function ($student) use ($course) {
             // Fetch attendance records for non-dropped students
             $attendanceRecords = Attendance::where('student_id', $student->id)
@@ -120,15 +121,15 @@ class AdminController extends Controller
                     $query->where('course_id', $course->id);
                 })
                 ->get();
-    
+
             // Count only attendances where is_present is explicitly false
             $absentCount = $attendanceRecords->where('is_present', false)
-            ->whereNotNull('is_present')
-            ->count();
-    
+                ->whereNotNull('is_present')
+                ->count();
+
             $absencePercentage = round($absentCount * 3.33, 2);
             $status = $absencePercentage >= 25 ? 'Drop risk' : 'Safe';
-    
+
             return [
                 'id'                 => $student->id,
                 'user_id'            => $student->user_id,
@@ -143,21 +144,21 @@ class AdminController extends Controller
                 'status'             => $status,
             ];
         });
-    
+
         return response()->json($students);
     }
-    
+
     /**
      * Get courses for a specific student, including instructor details.
      */
     public function getCoursesForStudent($studentId)
     {
         $student = Student::find($studentId);
-    
+
         if (!$student) {
             return response()->json(['message' => 'Student not found'], 404);
         }
-    
+
         // Retrieve active courses only
         $courses = $student->courses()
             ->withPivot('status')
@@ -166,7 +167,7 @@ class AdminController extends Controller
                 $query->select('users.id', 'users.first_name', 'users.last_name');
             }])
             ->get();
-    
+
         // Map the courses to the desired structure
         $coursesWithInstructors = $courses->map(function ($course) use ($student) {
             // Calculate attendance for active courses
@@ -175,13 +176,13 @@ class AdminController extends Controller
                     $query->where('course_id', $course->id);
                 })
                 ->get();
-    
-                $absentCount = $attendanceRecords->where('is_present', false)
+
+            $absentCount = $attendanceRecords->where('is_present', false)
                 ->whereNotNull('is_present')
-                ->count();             
-                $absencePercentage = round($absentCount * 3.33, 2);
+                ->count();
+            $absencePercentage = round($absentCount * 3.33, 2);
             $riskStatus = $absencePercentage >= 25 ? 'Risk of drop' : 'Safe';
-    
+
             return [
                 'id' => $course->id,
                 'course_code' => $course->Code,
@@ -197,7 +198,7 @@ class AdminController extends Controller
                 'status' => $riskStatus,
             ];
         });
-    
+
         return response()->json($coursesWithInstructors);
     }
 
@@ -244,23 +245,23 @@ class AdminController extends Controller
     public function getNotEnrolledStudents($courseId)
     {
         $course = Course::find($courseId);
-        
+
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-        
+
         // Get active enrolled student IDs
         $enrolledStudentIds = $course->students()
             ->wherePivot('status', 'active')
             ->pluck('students.id') // Ensure that this properly references students' id
             ->toArray();
-        
+
         // If there are no enrolled students, retrieve all students
         if (empty($enrolledStudentIds)) {
             $notEnrolledStudents = Student::with([
-                    'user:id,first_name,last_name,email',
-                    'department:id,name'
-                ])
+                'user:id,first_name,last_name,email',
+                'department:id,name'
+            ])
                 ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id')
                 ->get(); // Get all students
         } else {
@@ -273,10 +274,10 @@ class AdminController extends Controller
                 ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id')
                 ->get(); // Execute the query to get results
         }
-    
+
         return response()->json($notEnrolledStudents);
     }
-    
+
 
 
     public function updateProfile(Request $request)
@@ -574,7 +575,6 @@ class AdminController extends Controller
 
         $user = User::where('email', $request->instructor_email)->first();
         $instructor = Instructor::where('user_id', $user->id)->first();
-
         if (!$instructor) {
             return response()->json(['message' => 'Instructor not found for this user.'], 404);
         }
@@ -591,6 +591,32 @@ class AdminController extends Controller
         ]);
 
         $course->instructors()->sync([$instructor->id]);
+
+        // Re-generate CourseSessions if day_of_week or time changed
+        $term = Term::whereDate('start_time', '<=', now())
+            ->whereDate('end_time', '>=', now())
+            ->first();
+
+        if ($term) {
+            // Delete old sessions
+            \App\Models\CourseSession::where('course_id', $course->id)->delete();
+
+            $startDate = \Carbon\Carbon::parse($term->start_time);
+            $endDate = \Carbon\Carbon::parse($term->end_time);
+            $currentDate = $startDate->copy();
+
+            while ($currentDate->lte($endDate)) {
+                if ($this->matchesCourseDays($course->day_of_week, $currentDate)) {
+                    \App\Models\CourseSession::create([
+                        'course_id' => $course->id,
+                        'date' => $currentDate->format('Y-m-d'),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+                $currentDate->addDay();
+            }
+        }
 
         return response()->json([
             'message' => 'Course updated successfully.',
@@ -637,6 +663,22 @@ class AdminController extends Controller
             'has_current_day' => $enhancedSessions->contains('is_current_day', true),
             'sessions' => $enhancedSessions
         ]);
+    }
+    private function matchesCourseDays(string $dayOfWeekString, \Carbon\Carbon $date): bool
+    {
+        $map = [
+            0 => 'U',  // Sunday
+            1 => 'M',
+            2 => 'T',
+            3 => 'W',
+            4 => 'R',
+            5 => 'F',
+            6 => 'S',  // Saturday
+        ];
+
+        $letter = $map[$date->dayOfWeek];
+
+        return str_contains($dayOfWeekString, $letter);
     }
 
     public function getStudentCalendar($studentId, $courseId)
