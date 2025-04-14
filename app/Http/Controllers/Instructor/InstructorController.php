@@ -115,13 +115,14 @@ class InstructorController extends Controller
             $course = $attendance->course_session->course;
             $courseId = $course->id;
 
-            $attendances = Attendance::where('student_id', $student->id)
-                ->whereHas('course_session', fn($q) => $q->where('course_id', $courseId));
+            $attendanceRecords = Attendance::where('student_id', $student->id)
+                ->whereHas('course_session', fn($q) => $q->where('course_id', $courseId))
+                ->get();
 
-            $absentCount = (clone $attendances)->where('is_present', false)->count();
-            $totalSessions = $attendances->count();
-
-            $absencePercentage = ($totalSessions > 0) ? round($absentCount * 100 / $totalSessions, 2) : 0;
+            $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();
+            $absencePercentage = round($absentCount * 3.33, 2);
 
             $currentStatus = DB::table('course_student')
                 ->where('student_id', $student->id)
@@ -586,8 +587,9 @@ class InstructorController extends Controller
                 })
                 ->get();
 
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
-
+            $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();
             $absencePercentage = round($absentCount * 3.33, 2);
             $totalAbsencePercentage += $absencePercentage;
 
@@ -635,7 +637,9 @@ class InstructorController extends Controller
             ->with('course_session')
             ->get();
 
-        $absentCount = $attendanceRecords->count();
+        $absentCount = $attendanceRecords->where('is_present', false)
+            ->whereNotNull('is_present')
+            ->count();
         $absencePercentage = round($absentCount * 3.33, 2);
 
         $status = $absencePercentage >= 25 ? 'Drop Risk' : 'Safe';

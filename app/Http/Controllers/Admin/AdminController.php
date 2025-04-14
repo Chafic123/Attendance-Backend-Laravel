@@ -832,8 +832,9 @@ class AdminController extends Controller
                 })
                 ->get();
 
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
-
+            $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();
             $absencePercentage = round($absentCount * 3.33, 2);
             $totalAbsencePercentage += $absencePercentage;
 
@@ -881,7 +882,9 @@ class AdminController extends Controller
                 })
                 ->get();
 
-            $absentCount = $attendanceRecords->where('is_present', false)->count();
+            $absentCount = $attendanceRecords->where('is_present', false)
+                ->whereNotNull('is_present')
+                ->count();
             $absencePercentage = round($absentCount * 3.33, 2);
             $totalAbsencePercentage += $absencePercentage;
 
