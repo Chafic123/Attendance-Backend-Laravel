@@ -154,7 +154,6 @@
         <div class="summary-box">
             <br>
             Average Absence: <span class="summary-value">{{ $averageAbsence }}%</span><br>
-            Average Attendance: <span class="summary-value">{{ $averageAttendance }}%</span>
         </div>
     </div>
 
