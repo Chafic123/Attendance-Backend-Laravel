@@ -107,7 +107,7 @@ Route::middleware(['auth:sanctum', 'role:Instructor'])->prefix('instructor')->gr
     Route::get('/courses/{courseId}/attendance-report', [InstructorController::class, 'downloadCourseAttendanceReport'])
         ->name('instructor.course.attendance.report.download');
     Route::get('/students/{studentId}/courses/{courseId}/attendance-report', [InstructorController::class, 'downloadStudentCourseAttendanceReport'])
-        ->name('instructor.student.course.calendar');z
+        ->name('instructor.student.course.calendar');
 });
 
 // Student Routes (Only Students Can Access)
