@@ -87,7 +87,7 @@ class StudentController extends Controller
                     DB::table('course_student')
                         ->where('student_id', $student->id)
                         ->where('course_id', $course->id)
-                        ->update(['status' => 'active']); 
+                        ->update(['status' => 'active']);
                 }
             } else {
                 $newStatus = 'active';
@@ -283,6 +283,8 @@ class StudentController extends Controller
                     'resource_type' => 'image',
                 ]);
                 $student->image = $uploadedImage['secure_url'];
+                // reset processed_video 
+                $student->processed_video = 0;
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Failed to upload image: ' . $e->getMessage()], 500);
             }
@@ -292,7 +294,6 @@ class StudentController extends Controller
             try {
                 if ($student->video) {
                     $oldVideoPublicId = basename(parse_url($student->video, PHP_URL_PATH));
-                    // dd($oldVideoPublicId);
                     // Delete old video 
                     $cloudinary->uploadApi()->destroy($oldVideoPublicId);
                 }
@@ -444,46 +445,46 @@ class StudentController extends Controller
     public function requestCorrection(Request $request, $attendanceId)
     {
         $student = Auth::user()->student;
-    
+
         if (!$student) {
             return response()->json(['error' => 'Unauthorized request'], 403);
         }
-    
+
         $attendance = Attendance::where('id', $attendanceId)
             ->where('student_id', $student->id)
             ->first();
-    
+
         if (!$attendance) {
             return response()->json(['error' => 'Attendance record not found'], 404);
         }
-    
+
         $courseSession = CourseSession::find($attendance->course_session_id);
         if (!$courseSession) {
             return response()->json(['error' => 'Course session not found'], 404);
         }
-    
+
         $course = Course::find($courseSession->course_id);
         if (!$course) {
             return response()->json(['error' => 'Course not found'], 404);
         }
-    
+
         $instructor = $course->instructors()->first();
         if (!$instructor) {
             return response()->json(['error' => 'Instructor not found'], 404);
         }
-    
+
         if ($attendance->is_present) {
             return response()->json(['error' => 'Cannot request correction for present attendance'], 400);
         }
-    
+
         $existingRequest = AttendanceRequest::where('attendance_id', $attendance->id)
             ->where('student_id', $student->id)
             ->first();
-    
+
         if ($existingRequest) {
             return response()->json(['error' => 'You have already submitted a correction request for this attendance record'], 400);
         }
-    
+
         AttendanceRequest::create([
             'student_id'     => $student->id,
             'attendance_id'  => $attendance->id,
@@ -493,10 +494,10 @@ class StudentController extends Controller
             'request_date'   => now(),
             'status'         => 'pending',
         ]);
-    
+
         return response()->json(['message' => 'Correction request submitted successfully']);
     }
-    
+
 
 
     public function deleteStudentImage()
