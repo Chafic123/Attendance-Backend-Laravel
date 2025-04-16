@@ -278,8 +278,6 @@ class AdminController extends Controller
         return response()->json($notEnrolledStudents);
     }
 
-
-
     public function updateProfile(Request $request)
     {
         $admin = Auth::user()->admin;

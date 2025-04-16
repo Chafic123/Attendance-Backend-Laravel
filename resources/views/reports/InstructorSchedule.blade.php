@@ -5,9 +5,9 @@
     <title>Instructor Schedule Report</title>
     <style>
         body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 15px;
-            margin: 20px;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 14px;
+            margin: 40px;
             color: #333;
         }
 
@@ -15,56 +15,65 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 10px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
         }
 
-        .header h2 {
-            text-align: center;
-            margin: 0;
+        .header .title {
             font-size: 22px;
-            color: #2c3e50;
-            margin-bottom: 20px;
+            font-weight: bold;
+            color: #1e4a6b;
         }
 
         .instructor-info {
             text-align: right;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         .instructor-info strong {
-            font-size: 14px;
-            color: #2c3e50;
+            color: #1e4a6b;
         }
 
-        .separator {
-            border-top: 2px solid #2c3e50;
-            margin: 15px 0;
+        .section-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #1e4a6b;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
         th, td {
-            border: 1px solid #000;
-            padding: 6px 8px;
+            border: 1px solid #ccc;
+            padding: 8px 10px;
             text-align: left;
-            font-size: 12px;
         }
 
         th {
-            background-color: #ecf0f1;
-            color: #2c3e50;
+            background-color: #e4eef7;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
         .footer {
-            margin-top: 30px;
-            font-size: 15px;
+            position: absolute;
+            bottom: 30px;
+            left: 40px;
+            right: 40px;
             text-align: center;
-            color: #555;
+            font-size: 15px;
+            color: #999;
         }
+
         @page {
             size: A4 landscape;
             margin: 0;
@@ -73,51 +82,50 @@
 </head>
 <body>
 
-<div class="header">
-    <h2>Instructor Schedule Report</h2>
-    <div class="instructor-info">
-        <strong>{{ $instructor['first_name'] }} {{ $instructor['last_name'] }}</strong><br>
-        Email: {{ $instructor['email'] }}<br>
-        Department: {{ $instructor['department'] ?? 'N/A' }}
+    <div class="header">
+        <div class="title">Instructor Schedule Report</div>
+        <div class="instructor-info">
+            <strong>{{ $instructor['first_name'] }} {{ $instructor['last_name'] }}</strong><br>
+            Email: {{ $instructor['email'] }}<br>
+            Department: {{ $instructor['department'] ?? 'N/A' }}
+        </div>
     </div>
-</div>
 
-<div class="separator"></div>
-
-<table>
-    <thead>
-        <tr>
-            <th>Course Name</th>
-            <th>Code</th>
-            <th>Credits</th>
-            <th>Room</th>
-            <th>Term</th>
-            <th>Year</th>
-            <th>Days</th>
-            <th>Time</th>
-            <th>Section</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($courses as $course)
+    <div class="section-title">Teaching Schedule</div>
+    <table>
+        <thead>
             <tr>
-                <td>{{ $course['course_name'] }}</td>
-                <td>{{ $course['course_code'] }}</td>
-                <td>{{ $course['credits'] }}</td>
-                <td>{{ $course['room_name'] }}</td>
-                <td>{{ $course['term'] }}</td>
-                <td>{{ $course['year'] }}</td>
-                <td>{{ implode('', $course['day_of_week']) }}</td>
-                <td>{{ $course['time_start'] }} - {{ $course['time_end'] }}</td>
-                <td>{{ $course['section_name'] }}</td>
+                <th>Course Name</th>
+                <th>Code</th>
+                <th>Credits</th>
+                <th>Room</th>
+                <th>Term</th>
+                <th>Year</th>
+                <th>Days</th>
+                <th>Time</th>
+                <th>Section</th>
             </tr>
-        @endforeach
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach ($courses as $course)
+                <tr>
+                    <td>{{ $course['course_name'] }}</td>
+                    <td>{{ $course['course_code'] }}</td>
+                    <td>{{ $course['credits'] }}</td>
+                    <td>{{ $course['room_name'] }}</td>
+                    <td>{{ $course['term'] }}</td>
+                    <td>{{ $course['year'] }}</td>
+                    <td>{{ implode('', $course['day_of_week']) }}</td>
+                    <td>{{ $course['time_start'] }} - {{ $course['time_end'] }}</td>
+                    <td>{{ $course['section_name'] }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-<div class="footer">
-    Report generated on {{ \Carbon\Carbon::now()->format('F j Y \a\t g:i A') }}
-</div>
+    <div class="footer">
+        Report generated on {{ \Carbon\Carbon::now()->format('F j Y \a\t g:i A') }}
+    </div>
 
 </body>
 </html>
