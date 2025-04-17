@@ -519,9 +519,9 @@ class AdminController extends Controller
     {
         $messages = [
             'Code.unique' => 'A course session with this code and section already exists.',
-            'instructor_email.exists' => 'Instructor email not found in our records.',
+            'instructor_id.exists' => 'Instructor not found in our records.',
         ];
-
+    
         $validator = Validator::make($request->all(), [
             'Code' => [
                 'required',
@@ -532,23 +532,23 @@ class AdminController extends Controller
             ],
             'section' => 'required|string|max:255',
             'name' => 'required|string|max:255',
-            'instructor_email' => 'required|email|exists:users,email',
+            'instructor_id' => 'required|exists:instructors,id',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'day_of_week' => 'required|string|max:255',
             'room' => 'required|string|max:255',
             'credits' => 'required|integer|min:1',
         ], $messages);
-
+    
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
+    
         $course = Course::find($courseId);
         if (!$course) {
             return response()->json(['message' => 'Course not found.'], 404);
         }
-
+    
         // Check for room-time conflict (excluding the current course)
         $conflict = Course::where('Room', $request->room)
             ->where('day_of_week', $request->day_of_week)
@@ -562,20 +562,19 @@ class AdminController extends Controller
                     });
             })
             ->first();
-
+    
         if ($conflict) {
             return response()->json([
                 'message' => 'Room is already busy at that time',
                 'conflict_with' => $conflict
             ], 422);
         }
-
-        $user = User::where('email', $request->instructor_email)->first();
-        $instructor = Instructor::where('user_id', $user->id)->first();
+    
+        $instructor = Instructor::find($request->instructor_id);
         if (!$instructor) {
-            return response()->json(['message' => 'Instructor not found for this user.'], 404);
+            return response()->json(['message' => 'Instructor not found.'], 404);
         }
-
+    
         $course->fill([
             'Code' => $request->Code,
             'name' => $request->name,
@@ -586,34 +585,32 @@ class AdminController extends Controller
             'Section' => $request->section,
             'credit' => $request->credits,
         ]);
-
+    
         $wasDayChanged = $course->isDirty('day_of_week');
         $course->save();
-
+    
         $course->instructors()->sync([$instructor->id]);
-
+    
         // Update CourseSessions if term exists
         $term = Term::whereDate('start_time', '<=', now())
             ->whereDate('end_time', '>=', now())
             ->first();
-
+    
         if ($wasDayChanged && $term) {
             $startDate = \Carbon\Carbon::parse($term->start_time);
             $endDate = \Carbon\Carbon::parse($term->end_time);
             $currentDate = $startDate->copy();
-
-            // Get all current sessions for the course
+    
             $existingSessions = \App\Models\CourseSession::where('course_id', $course->id)->get();
             $newDates = [];
-
+    
             while ($currentDate->lte($endDate)) {
                 if ($this->matchesCourseDays($course->day_of_week, $currentDate)) {
                     $newDates[] = $currentDate->copy();
                 }
                 $currentDate->addDay();
             }
-
-            // Update existing sessions' dates
+    
             foreach ($existingSessions as $index => $session) {
                 if (isset($newDates[$index])) {
                     $session->update([
@@ -622,8 +619,7 @@ class AdminController extends Controller
                     ]);
                 }
             }
-
-            // Create new sessions if more dates are needed
+    
             for ($i = count($existingSessions); $i < count($newDates); $i++) {
                 \App\Models\CourseSession::create([
                     'course_id' => $course->id,
@@ -633,15 +629,13 @@ class AdminController extends Controller
                 ]);
             }
         }
-
+    
         return response()->json([
             'message' => 'Course updated successfully.',
             'course' => $course,
             'instructor' => [
-                'email' => $user->email,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'full_name' => $user->first_name . ' ' . $user->last_name,
+                'id' => $instructor->id,
+                'full_name' => $instructor->user->first_name . ' ' . $instructor->user->last_name,
             ]
         ], 200);
     }
