@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\Instructor;
-use App\Models\User;
 use App\Models\Term;
 
 class AddCourseController extends Controller
@@ -22,34 +21,10 @@ class AddCourseController extends Controller
             'day_of_week' => 'required|string',
             'start_time' => 'required|string',
             'end_time' => 'required|string',
-            'instructor_first_name' => 'required|string',
-            'instructor_last_name' => 'required|string',
-            'instructor_email' => [
-                'required',
-                'email',
-                function ($value, $fail) {
-                    if (User::where('email', $value)->orWhere('personal_email', $value)->exists()) {
-                        $fail("Email already exists.");
-                    }
-                }
-            ],
+            'instructor_id' => 'required|exists:instructors,id',
         ]);
 
-        $user = User::where('email', $validated['instructor_email'])->first();
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'No instructor record found for the provided email.'
-            ], 422);
-        }
-
-        $instructor = Instructor::where('user_id', $user->id)->first();
-
-        if (!$instructor) {
-            return response()->json([
-                'message' => 'No instructor record found for the provided email.'
-            ], 422);
-        }
+        $instructor = Instructor::find($validated['instructor_id']);
 
         $existingCourseSection = Course::where('Code', $validated['Code'])
             ->where('Section', $validated['Section'])
@@ -91,12 +66,12 @@ class AddCourseController extends Controller
         ]);
 
         $course->instructors()->attach($instructor->id);
+        
         $term = Term::whereDate('start_time', '<=', now())
             ->whereDate('end_time', '>=', now())
             ->first();
 
         if ($term) {
-            // ✅ Attach course to term
             $course->terms()->attach($term->id);
 
             $startDate = \Carbon\Carbon::parse($term->start_time);
@@ -118,13 +93,13 @@ class AddCourseController extends Controller
             }
         }
         
-        
         return response()->json([
             'message' => 'Course added successfully with instructor assigned',
             'course' => $course,
-            'instructor' => $user
+            'instructor' => $instructor
         ], 201);
     }
+
     private function matchesCourseDays(string $dayOfWeekString, \Carbon\Carbon $date): bool
     {
         $map = [
