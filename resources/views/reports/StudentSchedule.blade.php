@@ -11,6 +11,16 @@
             color: #333;
         }
 
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            width: 150px;
+            height: auto;
+        }
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -24,11 +34,21 @@
             font-size: 22px;
             font-weight: bold;
             color: #1e4a6b;
+            text-align: center;
+            margin-bottom: 5px;
         }
 
         .student-info {
-            text-align: right;
-            font-size: 13px;
+            text-align: left;
+            margin-bottom: 20px;
+            font-size: 15px;
+            background-color: #f3f7fa;
+            border-left: 4px solid #1e4a6b;
+            padding: 15px 20px;
+            width: fit-content;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-size: 15px;
+            line-height: 1.6;
         }
 
         .student-info strong {
@@ -36,11 +56,13 @@
         }
 
         .section-title {
-            font-size: 16px;
+            font-size: 18px;
             margin-bottom: 10px;
             color: #1e4a6b;
             border-bottom: 1px solid #ccc;
             padding-bottom: 5px;
+            text-align: center;
+            font-weight: bold;
         }
 
         table {
@@ -81,6 +103,10 @@
     </style>
 </head>
 <body>
+
+    <div class="logo-container">
+        <img src="{{ public_path('docs/images/RHU-Logo.jpg') }}" alt="RHU Logo">
+    </div>
 
     <div class="header">
         <div class="title">Student Schedule Report</div>

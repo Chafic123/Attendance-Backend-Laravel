@@ -1,57 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Student Attendance Report - {{ $student->user->first_name }} {{ $student->user->last_name }}</title>
     <style>
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 14px;
+            font-size: 13px;
             margin: 40px;
             color: #333;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
+        .logo-container {
+            text-align: center;
+            margin-bottom: 10px;
         }
 
-        .header .title {
+        .logo-container img {
+            width: 120px;
+        }
+
+        .main-title {
+            text-align: center;
             font-size: 22px;
             font-weight: bold;
             color: #1e4a6b;
+            margin-bottom: 25px;
         }
 
         .student-info {
-            text-align: right;
-            font-size: 13px;
+            text-align: left;
+            margin-bottom: 20px;
+            font-size: 15px;
+            background-color: #f3f7fa;
+            border-left: 4px solid #1e4a6b;
+            padding: 15px 20px;
+            width: fit-content;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-size: 15px;
+            line-height: 1.6;
         }
 
-        .student-info strong {
-            color: #1e4a6b;
+        .student-info p {
+            margin: 4px 0;
         }
 
         .section-title {
+            font-weight: bold;
+            text-align: center;
             font-size: 16px;
-            margin-bottom: 10px;
             color: #1e4a6b;
             border-bottom: 1px solid #ccc;
             padding-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
-        th, td {
+        th,
+        td {
             border: 1px solid #ccc;
-            padding: 8px 10px;
+            padding: 8px;
             text-align: center;
         }
 
@@ -64,6 +78,42 @@
             background-color: #f9f9f9;
         }
 
+        .summary {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .summary span {
+            font-weight: bold;
+            color: #1e4a6b;
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px dashed #ccc;
+            padding-top: 10px;
+        }
+
+        .status-present {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-warning {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .status-danger {
+            color: red;
+            font-weight: bold;
+        }
+
+
         .footer {
             position: absolute;
             bottom: 30px;
@@ -74,48 +124,29 @@
             color: #999;
         }
 
-        .summary-box {
-            margin-top: 20px;
-            font-size: 15px;
-            text-align: center;
-        }
-
-        .summary-value {
-            font-weight: bold;
-            color: #1e4a6b;
-        }
-
-        .status-present {
-            color: green;
-        }
-
-        .status-warning {
-            color: orange;
-        }
-
-        .status-danger {
-            color: red;
-        }
-
         @page {
             size: A4 landscape;
             margin: 0;
         }
     </style>
 </head>
+
 <body>
 
-    <div class="header">
-        <div class="title">Student Attendance Report</div>
-        <div class="student-info">
-            <p><strong>{{ $student->user->first_name }} {{ $student->user->last_name }}</strong></p>
-            <p>ID: {{ $student->student_id }}</p>
-            <p>Email: {{ $student->user->email ?? 'N/A' }}</p>
-            <p>Department: {{ $student->department->name ?? 'N/A' }}</p>
-        </div>
+    <div class="logo-container">
+        <img src="{{ public_path('docs/images/RHU-Logo.jpg') }}" alt="RHU Logo" style="width: 150px;">
     </div>
 
-    <div class="section-title">Attendance Summary</div>
+    <div class="main-title">Student Attendance Report</div>
+
+    <div class="student-info">
+        <p><strong>Full Name:</strong> {{ $student->user->first_name }} {{ $student->user->last_name }}</p>
+        <p><strong>Student ID:</strong> {{ $student->student_id }}</p>
+        <p><strong>Email:</strong> {{ $student->user->email ?? 'N/A' }}</p>
+        <p><strong>Department:</strong> {{ $student->department->name ?? 'N/A' }}</p>
+    </div>
+
+    <div class="section-title">Attendance Details</div>
 
     <table>
         <thead>
@@ -138,10 +169,8 @@
                     <td>{{ $course['credits'] }}</td>
                     <td>{{ $course['instructor'] }}</td>
                     <td>{{ $course['absence_percentage'] }}%</td>
-                    <td class="status-{{ 
-                        $course['absence_percentage'] < 10 ? 'present' : 
-                        ($course['absence_percentage'] < 25 ? 'warning' : 'danger') 
-                    }}">
+                    <td
+                        class="status-{{ $course['absence_percentage'] < 10 ? 'present' : ($course['absence_percentage'] < 25 ? 'warning' : 'danger') }}">
                         {{ $course['status'] }}
                     </td>
                 </tr>
@@ -150,12 +179,13 @@
     </table>
 
     <div class="footer">
-        Generated on {{ now()->format('Y-m-d H:i') }} — FYP team members
-        <div class="summary-box">
-            <br>
-            Average Absence: <span class="summary-value">{{ $averageAbsence }}%</span><br>
+        <div class="summary-box"
+            style="margin-top: 10px; padding: 10px; background-color: #f3f7fa; border-left: 4px solid #1e4a6b;">
+            Average Course Absence: <span class="summary-value" style="font-weight: 600">{{ $averageAbsence }}%</span>
         </div>
+        Generated on {{ now()->format('Y-m-d H:i') }} — FYP team members
     </div>
 
 </body>
+
 </html>
