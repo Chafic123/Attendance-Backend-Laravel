@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Instructor Schedule Report</title>
@@ -49,7 +50,8 @@
             margin-top: 15px;
         }
 
-        th, td {
+        th,
+        td {
             border: 1px solid #ccc;
             padding: 8px 10px;
             text-align: left;
@@ -80,6 +82,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="header">
@@ -128,4 +131,5 @@
     </div>
 
 </body>
+
 </html>

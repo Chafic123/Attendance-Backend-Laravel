@@ -102,7 +102,8 @@
     <div class="info-section">
         <div class="info-block">
             <h4>Student Information</h4>
-            <p><strong>Name:</strong> {{ optional($student->user)->first_name }} {{ optional($student->user)->last_name }}
+            <p><strong>Name:</strong> {{ optional($student->user)->first_name }}
+                {{ optional($student->user)->last_name }}
             </p>
             <p><strong>University ID:</strong> {{ $student->student_id }}</p>
             <p><strong>Email:</strong> {{ optional($student->user)->email }}</p>
