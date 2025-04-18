@@ -132,12 +132,21 @@ class MachineLearningController extends Controller
     {
         $today = now()->format('Y-m-d');
 
-        $courseSessions = CourseSession::with(['course', 'students.user'])
-            ->whereDate('date', $today)
-            ->get();
+        $processedStudents = Student::where('processed_video', 1)
+            ->with('user')
+            ->get()
+            ->map(function ($student) {
+                return [
+                    'student_id' => $student->id,
+                    'name' => $student->user->first_name . ' ' . $student->user->last_name,
+                    'university_id' => $student->student_id,
+                ];
+            });
 
-        return response()->json([
-            'course_sessions' => $courseSessions->map(function ($session) {
+        $courseSessions = CourseSession::with(['course', 'students'])
+            ->whereDate('date', $today)
+            ->get()
+            ->map(function ($session) {
                 return [
                     'session_id' => $session->id,
                     'date' => $session->date,
@@ -146,15 +155,13 @@ class MachineLearningController extends Controller
                     'course_section' => $session->course->Section,
                     'start_time' => $session->course->start_time,
                     'end_time' => $session->course->end_time,
-                    'students' => $session->students->map(function ($student) {
-                        return [
-                            'student_id' => $student->id,
-                            'name' => $student->user->first_name . ' ' . $student->user->last_name,
-                            'university_id' => $student->student_id,
-                        ];
-                    }),
+                    'students' => $session->students->pluck('id')
                 ];
-            })
+            });
+
+        return response()->json([
+            'course_sessions' => $courseSessions,
+            'processed_students' => $processedStudents
         ]);
     }
 }
