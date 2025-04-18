@@ -150,6 +150,7 @@ class MachineLearningController extends Controller
                         return [
                             'student_id' => $student->id,
                             'name' => $student->user->first_name . ' ' . $student->user->last_name,
+                            'university_id' => $student->student_id,
                         ];
                     }),
                 ];
