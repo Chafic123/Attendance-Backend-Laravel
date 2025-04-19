@@ -35,7 +35,8 @@ class AdminController extends Controller
                     'Department:id,name'
                 ]);
             },
-        ]);
+        ])->paginate(50);
+
         return response()->json($courses);
     }
 
@@ -48,7 +49,8 @@ class AdminController extends Controller
             ->with([
                 'instructor.department:id,name'
             ])
-            ->select('id', 'first_name', 'last_name', 'email');
+            ->select('id', 'first_name', 'last_name', 'email')
+            ->paginate(50);
 
         return response()->json($instructors);
     }
@@ -75,7 +77,8 @@ class AdminController extends Controller
             'user:id,first_name,last_name,email',
             'department:id,name'
         ])
-            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id');
+            ->select('id', 'user_id', 'major', 'image', 'video', 'student_id', 'department_id')
+            ->paginate(50);
 
         return response()->json($students);
     }
