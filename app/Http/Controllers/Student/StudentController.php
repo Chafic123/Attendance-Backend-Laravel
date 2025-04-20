@@ -180,21 +180,30 @@ class StudentController extends Controller
         $notifications = $query->orderBy('created_at', 'desc')->get();
 
         $notificationsData = $notifications->map(function ($notification) {
-            return [
-                'id' => $notification->id,
-                'message' => $notification->message,
-                'type' => $notification->type,
-                'read_status' => $notification->read_status,
-                'instructor_name' => optional($notification->instructor)->user
-                    ? $notification->instructor->user->first_name . ' ' . $notification->instructor->user->last_name
-                    : 'No instructor assigned',
-                'course' => optional($notification->course) ? [
+            $instructorName = 'System Notification';
+            if ($notification->instructor && $notification->instructor->user) {
+                $instructorName = $notification->instructor->user->first_name . ' ' . 
+                                $notification->instructor->user->last_name;
+            }
+
+            $courseData = null;
+            if ($notification->course) {
+                $courseData = [
                     'name' => $notification->course->name,
                     'code' => $notification->course->Code,
                     'start_time' => $notification->course->start_time,
                     'end_time' => $notification->course->end_time,
                     'day_of_week' => $notification->course->day_of_week,
-                ] : null,
+                ];
+            }
+
+            return [
+                'id' => $notification->id,
+                'message' => $notification->message,
+                'type' => $notification->type,
+                'read_status' => $notification->read_status,
+                'instructor_name' => $instructorName,
+                'course' => $courseData,
                 'created_at' => $notification->created_at->toDateTimeString(),
             ];
         });
@@ -283,7 +292,6 @@ class StudentController extends Controller
                     'resource_type' => 'image',
                 ]);
                 $student->image = $uploadedImage['secure_url'];
-                // reset processed_video 
                 $student->processed_video = 0;
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Failed to upload image: ' . $e->getMessage()], 500);
@@ -308,6 +316,7 @@ class StudentController extends Controller
                 ]);
 
                 $student->video = $uploadedVideo['secure_url'];
+                $student->processed_video = '0';
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Failed to upload video: ' . $e->getMessage()], 500);
             }

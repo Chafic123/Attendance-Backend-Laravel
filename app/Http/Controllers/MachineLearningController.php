@@ -50,6 +50,19 @@ class MachineLearningController extends Controller
         if ($request->processed == '1') {
             $student->processed_video = '1';
             $student->save();
+            \App\Models\Notification::create([
+                'student_id' => $student->id,
+                'course_id' => null,
+                'instructor_id' => null,
+                'message' => "Your video was processed successfully",
+                'type' => 'Regular',
+                'read_status' => false,
+                'data' => [
+                    'original_message' => $request->message,
+                    'required_frames' => config('ml.minimum_frames', 300),
+                    'student_name' => $student->user->name ?? 'Unknown',
+                ]
+            ]);
             Log::info("Student ID {$student->id} video processing status updated to: {$student->processed_video}");
         } else {
             try {
