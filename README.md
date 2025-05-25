@@ -1,66 +1,106 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🎓 Attendance Management System - Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is the **backend** component of our **Attendance Management System using Facial Detection and Recognition**, designed to automate attendance tracking through real-time face detection and recognition.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📌 Project Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Our system leverages:
+- **YOLO** and **CNN models** for **face detection**.
+- **LBPH (Local Binary Patterns Histogram)** for **face recognition**.
+- A robust backend to handle **data processing**, **authentication**, and **API services**.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+This project was recognized as one of the **Top 5 Senior Projects** for its innovation and impact.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🚀 Features
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- ✅ Real-time face detection and recognition (via integrated models)
+- ✅ RESTful API endpoints for attendance management
+- ✅ Secure authentication system
+- ✅ Backend architecture ready for scaling and real-time data handling
+- ✅ Database integration for storing users, attendance records, and logs
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 🛠️ Backend Tech Stack
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| **Component**     | **Technology**                |
+|-------------------|-----------------------------|
+| Backend Framework | **Laravel With Sanctum**  |
+| Database          | **PostgreSQL**    |
+| Authentication    | **Sanctum Token** |
+| Computer Vision   | YOLO, CNN, LBPH (Python libraries) |
+| API Design        | REST APIs                    |
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## ⚙️ System Architecture (Backend)
 
-## Contributing
+The backend is designed for **modular scalability** and **real-time data handling**, following **RESTful API principles**. It interacts with the facial detection module and manages data flow for the entire system.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 🏗️ Workflow Overview
 
-## Code of Conduct
+1. **Face Capture (External Python Module)**  
+   - The Python module (YOLO, CNN, LBPH) processes video frames and detects faces.
+   - Recognized face data is sent to the backend .
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. **Backend Processing**  
+   - Backend receives face data via API endpoints.
+   - Verifies and authenticates requests.
+   - Updates attendance records in the **PostgreSQL** database.
+   - Provides API responses for frontend or admin dashboard.
 
-## Security Vulnerabilities
+3. **Data Management**  
+   - Stores users, roles (e.g., student, admin), attendance logs, and face data.
+   - Supports real-time updates for the system’s frontend.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 🌐 Integration with Detection Module
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- The Python module (external) handles:
+  - Face detection via **YOLO/CNN**
+  - Face recognition using **LBPH**
+  - Sending detected face data (ID, timestamp) to the backend via API requests.
+
+- The backend verifies the data, marks attendance, and stores it in the database.
+
+---
+
+## 🚀 Running the Backend Locally
+
+### Prerequisites
+
+- Java 11+  
+- PostgreSQL 
+- Python 3.x (for external detection module)
+- Composer
+  
+### Setup Steps
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/attendance-backend.git
+cd attendance-backend
+
+# Install PHP dependencies via Composer
+composer install
+
+# Install Laravel Sanctum for authentication
+composer require laravel/sanctum
+
+# Publish Sanctum configuration and migration files
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+# Run database migrations
+php artisan migrate
+
+# Generate application key
+php artisan key:generate
+
+# Start the local development server
+php artisan serve
+
